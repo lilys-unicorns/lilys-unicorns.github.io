@@ -33,7 +33,7 @@ Lily Unicorns is a cooperative 2D platformer featuring two unicorns with differe
    ```bash
    pip install -r requirements.txt
    ```
-3. Ensure you have the `kaitlyn_unicorn.png` sprite file in the game directory
+3. Ensure you have the `kaitlyn_unicorn.png` sprite file in the `assets/sprites/` directory
 
 ## How to Play
 
@@ -92,7 +92,7 @@ level:
 
 # Background image (optional)
 background:
-  image: "background.png"  # Image filename (put in same directory as main.py)
+  image: "background.png"  # Image filename (put in assets/backgrounds/ directory)
   # Set to null or omit this section if no background image
 
 unicorns:
@@ -145,7 +145,7 @@ rainbow:
 
 #### Background Images
 - Add custom background images to any level by specifying the image filename in the `background` section
-- Images should be placed in the same directory as `main.py`
+- Images should be placed in the `assets/backgrounds/` directory
 - Supports common image formats (PNG, JPG, etc.)
 - Images are automatically scaled to fit the screen
 
@@ -157,22 +157,28 @@ rainbow:
 
 ### Adding New Levels
 
-1. Create a new YAML file (e.g., `level4.yml`)
+1. Create a new YAML file in the `levels/` directory (e.g., `levels/level4.yml`)
 2. Follow the format above
 3. Update the `max_levels` variable in `main.py` to include your new level count
-4. Run the game and your new level will be available!
+4. Add any background images to the `assets/backgrounds/` directory
+5. Run the game and your new level will be available!
 
 ## File Structure
 
 ```
 lily_unicorns/
 ├── main.py              # Main game file
-├── kaitlyn_unicorn.png  # Sprite sheet
-├── level1.yml           # Level 1 configuration
-├── level2.yml           # Level 2 configuration
-├── level3.yml           # Level 3 configuration
 ├── requirements.txt     # Python dependencies
-└── README.md           # This file
+├── README.md           # This file
+├── assets/             # Game assets
+│   ├── sprites/        # Sprite files
+│   │   └── kaitlyn_unicorn.png  # Unicorn sprite sheet
+│   └── backgrounds/    # Background images
+│       └── (place background images here)
+└── levels/             # Level configuration files
+    ├── level1.yml      # Level 1 configuration
+    ├── level2.yml      # Level 2 configuration
+    └── level3.yml      # Level 3 configuration
 ```
 
 ## Game Mechanics
@@ -212,11 +218,13 @@ lily_unicorns/
 
 **Game won't start:**
 - Ensure all dependencies are installed: `pip install -r requirements.txt`
-- Check that `kaitlyn_unicorn.png` is in the same directory as `main.py`
+- Check that `kaitlyn_unicorn.png` is in the `assets/sprites/` directory
+- Verify the `levels/` directory contains the level files
 
 **Missing levels:**
 - Verify YAML files are in the correct format
-- Check that level files are named correctly (`level1.yml`, `level2.yml`, etc.)
+- Check that level files are in the `levels/` directory and named correctly (`level1.yml`, `level2.yml`, etc.)
+- Ensure background images are in the `assets/backgrounds/` directory
 
 **Performance issues:**
 - The game runs at 60 FPS by default

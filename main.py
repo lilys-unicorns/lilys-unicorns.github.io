@@ -55,18 +55,26 @@ def load_level(level_file):
 def load_background_image(image_path):
     """Load and scale background image to fit screen"""
     global background_image
-    if image_path and os.path.exists(image_path):
-        try:
-            background_image = pygame.image.load(image_path).convert()
-            background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
-            return True
-        except pygame.error as e:
-            print(f"Error loading background image {image_path}: {e}")
-            background_image = None
-            return False
-    else:
-        background_image = None
-        return False
+    if image_path:
+        # Check if it's a full path or just a filename
+        if not os.path.dirname(image_path):
+            # Just a filename, prepend assets/backgrounds/
+            full_path = os.path.join("assets", "backgrounds", image_path)
+        else:
+            full_path = image_path
+        
+        if os.path.exists(full_path):
+            try:
+                background_image = pygame.image.load(full_path).convert()
+                background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
+                return True
+            except pygame.error as e:
+                print(f"Error loading background image {full_path}: {e}")
+                background_image = None
+                return False
+    
+    background_image = None
+    return False
 
 
 def create_level_objects(level_data, screen_width, screen_height):
@@ -263,7 +271,7 @@ class Unicorn(pygame.sprite.Sprite):
         super().__init__()
 
         # Load the sprite sheet
-        self.sprite_sheet = pygame.image.load("kaitlyn_unicorn.png").convert_alpha()
+        self.sprite_sheet = pygame.image.load("assets/sprites/kaitlyn_unicorn.png").convert_alpha()
 
         # Extract individual frames for animation
         # 80x48 image with 15 parts in 5x3 grid = 16x16 per frame
@@ -451,7 +459,7 @@ max_levels = 3
 
 def load_current_level():
     """Load the current level"""
-    level_file = f"level{current_level}.yml"
+    level_file = f"levels/level{current_level}.yml"
     level_data = load_level(level_file)
 
     if level_data is None:
