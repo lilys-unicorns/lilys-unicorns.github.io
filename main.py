@@ -2,6 +2,8 @@ import pygame
 import sys
 import random
 import math
+import yaml
+import os
 
 pygame.init()
 
@@ -33,6 +35,90 @@ def invert_surface_colors(surface):
     inverted.unlock()
     
     return inverted
+
+def load_level(level_file):
+    """Load level configuration from YAML file"""
+    try:
+        with open(level_file, 'r') as f:
+            level_data = yaml.safe_load(f)
+        return level_data
+    except FileNotFoundError:
+        print(f"Level file {level_file} not found!")
+        return None
+    except yaml.YAMLError as e:
+        print(f"Error parsing YAML file: {e}")
+        return None
+
+def create_level_objects(level_data, screen_width, screen_height):
+    """Create game objects from level data"""
+    objects = {
+        'platforms': pygame.sprite.Group(),
+        'white_items': pygame.sprite.Group(),
+        'black_items': pygame.sprite.Group(),
+        'rainbow': None,
+        'unicorn1_start': None,
+        'unicorn2_start': None
+    }
+    
+    # Create platforms
+    if 'platforms' in level_data:
+        for platform_data in level_data['platforms']:
+            platform = Platform(
+                platform_data['x'],
+                screen_height - platform_data['y'],  # Convert from bottom-relative to top-relative
+                platform_data['width'],
+                platform_data['height'],
+                tuple(platform_data['color'])
+            )
+            objects['platforms'].add(platform)
+    
+    # Create white items
+    if 'white_items' in level_data:
+        for item_data in level_data['white_items']:
+            item = Item(
+                item_data['x'],
+                screen_height - item_data['y'],  # Convert from bottom-relative to top-relative
+                (255, 255, 255)
+            )
+            objects['white_items'].add(item)
+    
+    # Create black items
+    if 'black_items' in level_data:
+        for item_data in level_data['black_items']:
+            item = Item(
+                item_data['x'],
+                screen_height - item_data['y'],  # Convert from bottom-relative to top-relative
+                (0, 0, 0)
+            )
+            objects['black_items'].add(item)
+    
+    # Create rainbow
+    if 'rainbow' in level_data:
+        rainbow_data = level_data['rainbow']
+        objects['rainbow'] = Rainbow(
+            screen_width - rainbow_data['x'],  # Convert from right-relative to left-relative
+            screen_height - rainbow_data['y'],  # Convert from bottom-relative to top-relative
+            rainbow_data['width'],
+            rainbow_data['height']
+        )
+    
+    # Get unicorn starting positions
+    if 'unicorns' in level_data:
+        unicorns_data = level_data['unicorns']
+        if 'unicorn1' in unicorns_data:
+            u1_data = unicorns_data['unicorn1']
+            objects['unicorn1_start'] = (
+                u1_data['x'],
+                screen_height // 2 if u1_data['y'] is None else screen_height - u1_data['y']
+            )
+        if 'unicorn2' in unicorns_data:
+            u2_data = unicorns_data['unicorn2']
+            objects['unicorn2_start'] = (
+                u2_data['x'],
+                screen_height // 2 if u2_data['y'] is None else screen_height - u2_data['y']
+            )
+    
+    return objects
 
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 screen_width, screen_height = screen.get_size()
@@ -287,51 +373,86 @@ class Unicorn(pygame.sprite.Sprite):
             return True
         return False
 
-# Create game objects
-unicorn1 = Unicorn(invert_colors=False, start_x=screen_width // 4)         # Player 1 (arrow keys)
-unicorn2 = Unicorn(invert_colors=True, start_x=3 * screen_width // 4)      # Player 2 (WASD)
+# Level management
+current_level = 1
+max_levels = 3
 
-# Create platforms with different colors
-platforms = pygame.sprite.Group()
-platforms.add(Platform(200, screen_height - 250, 150, 20, (255, 0, 0)))      # Red platform
-platforms.add(Platform(400, screen_height - 400, 150, 20, (0, 255, 0)))      # Green platform
-platforms.add(Platform(600, screen_height - 300, 150, 20, (0, 0, 255)))      # Blue platform
-platforms.add(Platform(800, screen_height - 500, 150, 20, (255, 255, 0)))    # Yellow platform
-platforms.add(Platform(1000, screen_height - 200, 150, 20, (255, 0, 255)))   # Magenta platform
-platforms.add(Platform(1200, screen_height - 450, 150, 20, (0, 255, 255)))   # Cyan platform
+def load_current_level():
+    """Load the current level"""
+    level_file = f"level{current_level}.yml"
+    level_data = load_level(level_file)
+    
+    if level_data is None:
+        # Fallback to default level if file not found
+        print(f"Could not load {level_file}, using default level")
+        level_data = {
+            'level': {'name': 'Default Level'},
+            'unicorns': {
+                'unicorn1': {'x': screen_width // 4, 'y': None},
+                'unicorn2': {'x': 3 * screen_width // 4, 'y': None}
+            },
+            'platforms': [
+                {'x': 200, 'y': 250, 'width': 150, 'height': 20, 'color': [255, 0, 0]},
+                {'x': 400, 'y': 400, 'width': 150, 'height': 20, 'color': [0, 255, 0]},
+                {'x': 600, 'y': 300, 'width': 150, 'height': 20, 'color': [0, 0, 255]}
+            ],
+            'white_items': [
+                {'x': 250, 'y': 300},
+                {'x': 450, 'y': 450},
+                {'x': 650, 'y': 350}
+            ],
+            'black_items': [
+                {'x': 500, 'y': 150},
+                {'x': 700, 'y': 200},
+                {'x': 900, 'y': 300}
+            ],
+            'rainbow': {'x': 300, 'y': 300, 'width': 200, 'height': 200}
+        }
+    
+    return level_data
 
-# Create collectible items
-white_items = pygame.sprite.Group()
-black_items = pygame.sprite.Group()
+def reset_level():
+    """Reset the current level"""
+    global level_complete, glitters, unicorn1, unicorn2, platforms, white_items, black_items, rainbow, all_sprites
+    
+    level_complete = False
+    glitters = []
+    
+    # Load level data
+    level_data = load_current_level()
+    level_objects = create_level_objects(level_data, screen_width, screen_height)
+    
+    # Create unicorns with starting positions
+    unicorn1_start = level_objects['unicorn1_start'] or (screen_width // 4, screen_height // 2)
+    unicorn2_start = level_objects['unicorn2_start'] or (3 * screen_width // 4, screen_height // 2)
+    
+    unicorn1 = Unicorn(invert_colors=False, start_x=unicorn1_start[0])
+    unicorn2 = Unicorn(invert_colors=True, start_x=unicorn2_start[0])
+    
+    # Set Y positions
+    unicorn1.rect.centery = unicorn1_start[1]
+    unicorn2.rect.centery = unicorn2_start[1]
+    
+    # Get level objects
+    platforms = level_objects['platforms']
+    white_items = level_objects['white_items']
+    black_items = level_objects['black_items']
+    rainbow = level_objects['rainbow']
+    
+    # Create sprite groups
+    all_sprites = pygame.sprite.Group()
+    all_sprites.add(unicorn1)
+    all_sprites.add(unicorn2)
+    all_sprites.add(platforms)
+    all_sprites.add(white_items)
+    all_sprites.add(black_items)
+    if rainbow:
+        all_sprites.add(rainbow)
+    
+    return level_data
 
-# Add white items (for unicorn1)
-white_items.add(Item(250, screen_height - 300, (255, 255, 255)))
-white_items.add(Item(450, screen_height - 450, (255, 255, 255)))
-white_items.add(Item(650, screen_height - 350, (255, 255, 255)))
-white_items.add(Item(850, screen_height - 550, (255, 255, 255)))
-white_items.add(Item(300, screen_height - 150, (255, 255, 255)))
-
-# Add black items (for unicorn2)
-black_items.add(Item(500, screen_height - 150, (0, 0, 0)))
-black_items.add(Item(700, screen_height - 200, (0, 0, 0)))
-black_items.add(Item(900, screen_height - 300, (0, 0, 0)))
-black_items.add(Item(1100, screen_height - 250, (0, 0, 0)))
-black_items.add(Item(1300, screen_height - 500, (0, 0, 0)))
-
-# Create rainbow
-rainbow = Rainbow(screen_width - 300, screen_height - 300, 200, 200)
-
-# Game state
-level_complete = False
-glitters = []
-
-all_sprites = pygame.sprite.Group()
-all_sprites.add(unicorn1)
-all_sprites.add(unicorn2)
-all_sprites.add(platforms)
-all_sprites.add(white_items)
-all_sprites.add(black_items)
-all_sprites.add(rainbow)
+# Load initial level
+level_data = reset_level()
 
 # Game loop
 running = True
@@ -342,6 +463,17 @@ while running:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 running = False
+            elif event.key == pygame.K_r:
+                # Reset current level
+                level_data = reset_level()
+            elif event.key == pygame.K_n and level_complete:
+                # Next level
+                if current_level < max_levels:
+                    current_level += 1
+                    level_data = reset_level()
+                else:
+                    # All levels completed
+                    running = False
     
     if not level_complete:
         keys = pygame.key.get_pressed()
@@ -400,12 +532,15 @@ while running:
     for glitter in glitters:
         glitter.draw(screen)
     
-    # Draw score counters
+    # Draw score counters and level info
+    level_name = level_data.get('level', {}).get('name', f'Level {current_level}')
+    level_text = font.render(f"{level_name}", True, (255, 255, 255))
     score1_text = font.render(f"Player 1 (White): {unicorn1.score}", True, (255, 255, 255))
     score2_text = font.render(f"Player 2 (Black): {unicorn2.score}", True, (255, 255, 255))
     
-    screen.blit(score1_text, (20, 20))
-    screen.blit(score2_text, (20, 60))
+    screen.blit(level_text, (20, 20))
+    screen.blit(score1_text, (20, 60))
+    screen.blit(score2_text, (20, 100))
     
     # Draw level complete message
     if level_complete:
@@ -419,10 +554,18 @@ while running:
         
         screen.blit(complete_text, text_rect)
         
-        # Draw instruction
-        instruction_text = font.render("Press ESC to exit", True, (255, 255, 255))
+        # Draw instructions
+        if current_level < max_levels:
+            instruction_text = font.render("Press N for next level or ESC to exit", True, (255, 255, 255))
+        else:
+            instruction_text = font.render("All levels completed! Press ESC to exit", True, (255, 255, 255))
         instruction_rect = instruction_text.get_rect(center=(screen_width // 2, screen_height // 2 + 50))
         screen.blit(instruction_text, instruction_rect)
+        
+        # Draw reset instruction
+        reset_text = font.render("Press R to reset level", True, (255, 255, 255))
+        reset_rect = reset_text.get_rect(center=(screen_width // 2, screen_height // 2 + 90))
+        screen.blit(reset_text, reset_rect)
     
     pygame.display.flip()
     clock.tick(60)

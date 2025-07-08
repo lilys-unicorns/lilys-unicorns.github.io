@@ -1,0 +1,72 @@
+level:
+  name: "Level 1 - Getting Started"
+  
+unicorns:
+  unicorn1:
+    x: 200  # Starting X position (screen_width will be used for relative positioning)
+    y: null  # null means use default (screen_height // 2)
+  unicorn2:
+    x: 600
+    y: null
+
+platforms:
+  - x: 200
+    y: 250  # From bottom of screen
+    width: 150
+    height: 20
+    color: [255, 0, 0]  # Red
+  - x: 400
+    y: 400
+    width: 150
+    height: 20
+    color: [0, 255, 0]  # Green
+  - x: 600
+    y: 300
+    width: 150
+    height: 20
+    color: [0, 0, 255]  # Blue
+  - x: 800
+    y: 500
+    width: 150
+    height: 20
+    color: [255, 255, 0]  # Yellow
+  - x: 1000
+    y: 200
+    width: 150
+    height: 20
+    color: [255, 0, 255]  # Magenta
+  - x: 1200
+    y: 450
+    width: 150
+    height: 20
+    color: [0, 255, 255]  # Cyan
+
+white_items:
+  - x: 250
+    y: 300
+  - x: 450
+    y: 450
+  - x: 650
+    y: 350
+  - x: 850
+    y: 550
+  - x: 300
+    y: 150
+
+black_items:
+  - x: 500
+    y: 150
+  - x: 700
+    y: 200
+  - x: 900
+    y: 300
+  - x: 1100
+    y: 250
+  - x: 1300
+    y: 500
+
+rainbow:
+  x: 300  # From right edge of screen
+  y: 300  # From bottom of screen
+  width: 200
+  height: 200
