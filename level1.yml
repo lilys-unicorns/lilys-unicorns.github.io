@@ -1,6 +1,10 @@
 level:
   name: "Level 1 - Getting Started"
-  
+
+# Background image (optional)
+background:
+  image: null  # Set to image filename like "background1.png" if you have one
+
 unicorns:
   unicorn1:
     x: 200  # Starting X position (screen_width will be used for relative positioning)
@@ -15,31 +19,37 @@ platforms:
     width: 150
     height: 20
     color: [255, 0, 0]  # Red
+    alpha: 255  # Fully opaque (default)
   - x: 400
     y: 400
     width: 150
     height: 20
     color: [0, 255, 0]  # Green
+    alpha: 180  # Semi-transparent
   - x: 600
     y: 300
     width: 150
     height: 20
     color: [0, 0, 255]  # Blue
+    alpha: 255  # Fully opaque
   - x: 800
     y: 500
     width: 150
     height: 20
     color: [255, 255, 0]  # Yellow
+    alpha: 120  # More transparent
   - x: 1000
     y: 200
     width: 150
     height: 20
     color: [255, 0, 255]  # Magenta
+    alpha: 255  # Fully opaque
   - x: 1200
     y: 450
     width: 150
     height: 20
     color: [0, 255, 255]  # Cyan
+    alpha: 150  # Semi-transparent
 
 white_items:
   - x: 250

@@ -1,6 +1,10 @@
 level:
   name: "Level 2 - Tower Challenge"
-  
+
+# Background image (optional)
+background:
+  image: null  # Set to image filename like "background2.png" if you have one
+
 unicorns:
   unicorn1:
     x: 100
@@ -16,16 +20,19 @@ platforms:
     width: 100
     height: 20
     color: [255, 100, 100]  # Light Red
+    alpha: 255  # Fully opaque
   - x: 50
     y: 250
     width: 100
     height: 20
     color: [255, 150, 150]  # Lighter Red
+    alpha: 200  # Semi-transparent
   - x: 50
     y: 350
     width: 100
     height: 20
     color: [255, 200, 200]  # Very Light Red
+    alpha: 160  # More transparent
   
   # Center platforms
   - x: 400
@@ -33,11 +40,13 @@ platforms:
     width: 200
     height: 20
     color: [100, 255, 100]  # Light Green
+    alpha: 255  # Fully opaque
   - x: 700
     y: 450
     width: 200
     height: 20
     color: [150, 255, 150]  # Lighter Green
+    alpha: 180  # Semi-transparent
   
   # Right tower
   - x: 1350
@@ -45,16 +54,19 @@ platforms:
     width: 100
     height: 20
     color: [100, 100, 255]  # Light Blue
+    alpha: 255  # Fully opaque
   - x: 1350
     y: 250
     width: 100
     height: 20
     color: [150, 150, 255]  # Lighter Blue
+    alpha: 200  # Semi-transparent
   - x: 1350
     y: 350
     width: 100
     height: 20
     color: [200, 200, 255]  # Very Light Blue
+    alpha: 160  # More transparent
 
 white_items:
   - x: 75
@@ -82,6 +94,6 @@ black_items:
 
 rainbow:
   x: 250  # From right edge of screen  
-  y: 500  # From bottom of screen
+  y: 300  # From bottom of screen
   width: 150
   height: 150

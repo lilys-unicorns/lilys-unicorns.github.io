@@ -52,6 +52,23 @@ def load_level(level_file):
         return None
 
 
+def load_background_image(image_path):
+    """Load and scale background image to fit screen"""
+    global background_image
+    if image_path and os.path.exists(image_path):
+        try:
+            background_image = pygame.image.load(image_path).convert()
+            background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
+            return True
+        except pygame.error as e:
+            print(f"Error loading background image {image_path}: {e}")
+            background_image = None
+            return False
+    else:
+        background_image = None
+        return False
+
+
 def create_level_objects(level_data, screen_width, screen_height):
     """Create game objects from level data"""
     objects = {
@@ -63,9 +80,16 @@ def create_level_objects(level_data, screen_width, screen_height):
         "unicorn2_start": None,
     }
 
+    # Load background image if specified
+    if "background" in level_data:
+        background_path = level_data["background"].get("image", None)
+        if background_path:
+            load_background_image(background_path)
+
     # Create platforms
     if "platforms" in level_data:
         for platform_data in level_data["platforms"]:
+            alpha = platform_data.get("alpha", 255)  # Default to fully opaque
             platform = Platform(
                 platform_data["x"],
                 screen_height
@@ -73,6 +97,7 @@ def create_level_objects(level_data, screen_width, screen_height):
                 platform_data["width"],
                 platform_data["height"],
                 tuple(platform_data["color"]),
+                alpha,
             )
             objects["platforms"].add(platform)
 
@@ -146,14 +171,18 @@ clock = pygame.time.Clock()
 # Initialize font for score display
 font = pygame.font.Font(None, 36)
 
+# Global background image
+background_image = None
+
 
 class Platform(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height, color):
+    def __init__(self, x, y, width, height, color, alpha=255):
         super().__init__()
-        self.image = pygame.Surface((width, height))
-        self.image.fill(color)
+        self.image = pygame.Surface((width, height), pygame.SRCALPHA)
+        self.image.fill((*color, alpha))
         self.rect = pygame.Rect(x, y, width, height)
         self.color = color
+        self.alpha = alpha
 
 
 class Item(pygame.sprite.Sprite):
@@ -590,7 +619,12 @@ while running:
                 )
             )
 
-    screen.fill((50, 150, 50))
+    # Draw background
+    if background_image:
+        screen.blit(background_image, (0, 0))
+    else:
+        screen.fill((50, 150, 50))
+    
     all_sprites.draw(screen)
 
     # Draw glitters

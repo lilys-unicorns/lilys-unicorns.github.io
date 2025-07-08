@@ -11,11 +11,13 @@ Lily Unicorns is a cooperative 2D platformer featuring two unicorns with differe
 - **Two-Player Cooperative Gameplay**: Both players must work together to complete levels
 - **Animated Unicorn Sprites**: Uses kaitlyn_unicorn.png sprite sheet with 15 animation frames
 - **Physics-Based Movement**: Gravity, jumping, and climbing mechanics
-- **Colorful Platforms**: Climbable platforms with distinct colors
+- **Colorful Platforms**: Climbable platforms with distinct colors and transparency support
 - **Item Collection**: White items for Player 1, black items for Player 2
 - **Rainbow Completion**: Level ends when both unicorns reach the rainbow
 - **Glitter Effects**: Beautiful particle effects on level completion
 - **YAML Level System**: Easily customizable levels through YAML configuration files
+- **Background Images**: Support for custom background images per level
+- **Transparent Platforms**: Platforms can have varying transparency levels
 - **Multiple Levels**: Three built-in levels with increasing difficulty
 
 ## Requirements
@@ -87,7 +89,12 @@ You can create your own levels by creating YAML files named `level4.yml`, `level
 ```yaml
 level:
   name: "Your Level Name"
-  
+
+# Background image (optional)
+background:
+  image: "background.png"  # Image filename (put in same directory as main.py)
+  # Set to null or omit this section if no background image
+
 unicorns:
   unicorn1:
     x: 200      # Starting X position
@@ -102,6 +109,13 @@ platforms:
     width: 150          # Platform width
     height: 20          # Platform height
     color: [255, 0, 0]  # RGB color [Red, Green, Blue]
+    alpha: 255          # Transparency (0=invisible, 255=opaque) - optional, defaults to 255
+  - x: 400
+    y: 300
+    width: 100
+    height: 20
+    color: [0, 255, 0]  # Green
+    alpha: 128          # Semi-transparent platform
   # Add more platforms...
 
 white_items:
@@ -126,6 +140,20 @@ rainbow:
 - **Y coordinates**: Measured from the bottom of the screen (0 = bottom, higher values = higher up)
 - **Rainbow X coordinate**: Measured from the RIGHT edge of the screen
 - **All other X coordinates**: Measured from the left edge of the screen
+
+### New Features
+
+#### Background Images
+- Add custom background images to any level by specifying the image filename in the `background` section
+- Images should be placed in the same directory as `main.py`
+- Supports common image formats (PNG, JPG, etc.)
+- Images are automatically scaled to fit the screen
+
+#### Transparent Platforms
+- Use the `alpha` parameter to control platform transparency
+- Values range from 0 (completely invisible) to 255 (fully opaque)
+- If `alpha` is not specified, platforms default to fully opaque (255)
+- Great for creating glass-like platforms or overlapping level elements
 
 ### Adding New Levels
 

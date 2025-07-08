@@ -1,6 +1,10 @@
 level:
   name: "Level 3 - Maze Runner"
-  
+
+# Background image (optional)
+background:
+  image: null  # Set to image filename like "background3.png" if you have one
+
 unicorns:
   unicorn1:
     x: 50
@@ -16,36 +20,43 @@ platforms:
     width: 300
     height: 20
     color: [255, 127, 0]  # Orange
+    alpha: 255  # Fully opaque
   - x: 600
     y: 200
     width: 20
     height: 200
     color: [255, 127, 0]  # Orange wall
+    alpha: 180  # Semi-transparent
   - x: 300
     y: 300
     width: 200
     height: 20
     color: [255, 127, 0]  # Orange
+    alpha: 255  # Fully opaque
   - x: 700
     y: 350
     width: 300
     height: 20
     color: [255, 127, 0]  # Orange
+    alpha: 200  # Semi-transparent
   - x: 900
     y: 450
     width: 20
     height: 200
     color: [255, 127, 0]  # Orange wall
+    alpha: 150  # More transparent
   - x: 1100
     y: 250
     width: 200
     height: 20
     color: [255, 127, 0]  # Orange
+    alpha: 255  # Fully opaque
   - x: 1200
     y: 400
     width: 150
     height: 20
     color: [255, 127, 0]  # Orange
+    alpha: 170  # Semi-transparent
 
 white_items:
   - x: 250
