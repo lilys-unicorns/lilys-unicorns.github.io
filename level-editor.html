@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lily's Unicorns - Level Editor</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: monospace;
+            background-color: #87CEEB;
+            color: #333;
+        }
+        
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .editor-panel {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            width: 300px;
+            max-height: 90vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .canvas-container {
+            position: relative;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            max-width: 960px;
+        }
+        
+        #gameCanvas {
+            border: 2px solid #333;
+            cursor: crosshair;
+            background: #87CEEB;
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        
+        .tool-section {
+            margin-bottom: 15px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 5px;
+            flex-shrink: 0;
+        }
+        
+        .tool-section.compact {
+            margin-bottom: 10px;
+            padding: 6px;
+        }
+        
+        .tool-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .tool-button {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: monospace;
+        }
+        
+        .tool-button:hover {
+            background: #45a049;
+        }
+        
+        .tool-button.active {
+            background: #ff6b6b;
+        }
+        
+        .input-group {
+            margin: 8px 0;
+        }
+        
+        .compact .input-group {
+            margin: 6px 0;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        
+        .color-input {
+            width: 50px;
+            height: 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .info-panel {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        
+        .save-load-section {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .file-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .file-actions button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: monospace;
+            font-weight: bold;
+        }
+        
+        .save-btn {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .load-btn {
+            background: #FF9800;
+            color: white;
+        }
+        
+        .clear-btn {
+            background: #f44336;
+            color: white;
+        }
+        
+        .json-output {
+            width: 100%;
+            height: 200px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+    <h1>🦄 Lily's Unicorns - Level Editor</h1>
+    <div style="text-align: center; margin-bottom: 20px;">
+        <a href="index.html" style="color: #4A90E2; text-decoration: none; margin: 0 15px;">← Back to Game</a>
+        <a href="credits.html" style="color: #4A90E2; text-decoration: none; margin: 0 15px;">📜 Credits</a>
+    </div>
+    
+    <div class="container">
+        <div class="editor-panel">
+            <div class="tool-section compact">
+                <h3>🎯 Tools</h3>
+                <button class="tool-button" id="selectTool">Select/Move</button>
+                <button class="tool-button" id="unicornTool">Place Unicorns</button>
+                <button class="tool-button" id="platformTool">Add Platform</button>
+                <button class="tool-button" id="treeTool">Add Tree</button>
+                <button class="tool-button" id="cloudTool">Add Cloud</button>
+                <button class="tool-button" id="itemTool">Add Items</button>
+                <button class="tool-button" id="triangleTool">Add Triangle</button>
+                <button class="tool-button" id="swampTool">Add Swamp</button>
+                <button class="tool-button" id="rainbowTool">Add Rainbow</button>
+                <button class="tool-button" id="deleteTool">Delete</button>
+            </div>
+            
+            <div class="tool-section" id="editSection" style="display: none;">
+                <h3>✏️ Edit Selected</h3>
+                <div id="selectedElementInfo">
+                    <div class="input-group">
+                        <label>Element Type:</label>
+                        <span id="selectedType">None</span>
+                    </div>
+                    
+                    <div class="input-group" id="editWidthGroup" style="display: none;">
+                        <label>Width:</label>
+                        <input type="range" id="editWidthSlider" min="1" max="50" value="15">
+                        <span id="editWidthValue">15</span>
+                    </div>
+                    
+                    <div class="input-group" id="editHeightGroup" style="display: none;">
+                        <label>Height:</label>
+                        <input type="range" id="editHeightSlider" min="1" max="30" value="8">
+                        <span id="editHeightValue">8</span>
+                    </div>
+                    
+                    <div class="input-group" id="editSizeGroup" style="display: none;">
+                        <label>Size:</label>
+                        <input type="range" id="editSizeSlider" min="1" max="20" value="5">
+                        <span id="editSizeValue">5</span>
+                    </div>
+                    
+                    <div class="input-group" id="editColorGroup" style="display: none;">
+                        <label>Color:</label>
+                        <input type="color" id="editColorPicker" class="color-input" value="#ff0000">
+                    </div>
+                    
+                    <div class="input-group" id="editAlphaGroup" style="display: none;">
+                        <label>Alpha:</label>
+                        <input type="range" id="editAlphaSlider" min="0" max="255" value="255">
+                        <span id="editAlphaValue">255</span>
+                    </div>
+                    
+                    <button class="tool-button" id="applyChangesBtn" style="background: #2196F3;">Apply Changes</button>
+                </div>
+            </div>
+            
+            <div class="tool-section compact">
+                <h3>⚙️ Properties</h3>
+                <div class="input-group">
+                    <label>Level Name:</label>
+                    <input type="text" id="levelName" value="New Level">
+                </div>
+                
+                <div class="input-group">
+                    <label>Item Type:</label>
+                    <select id="itemType">
+                        <option value="white">White Item</option>
+                        <option value="black">Black Item</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label>Color:</label>
+                    <input type="color" id="colorPicker" class="color-input" value="#ff0000">
+                </div>
+                
+                <div class="input-group">
+                    <label>Alpha:</label>
+                    <input type="range" id="alphaSlider" min="0" max="255" value="255">
+                    <span id="alphaValue">255</span>
+                </div>
+                
+                <div class="input-group">
+                    <label>Size:</label>
+                    <input type="range" id="sizeSlider" min="1" max="20" value="5">
+                    <span id="sizeValue">5</span>
+                </div>
+                
+                <div class="input-group">
+                    <label>Width:</label>
+                    <input type="range" id="widthSlider" min="1" max="50" value="15">
+                    <span id="widthValue">15</span>
+                </div>
+                
+                <div class="input-group">
+                    <label>Height:</label>
+                    <input type="range" id="heightSlider" min="1" max="30" value="8">
+                    <span id="heightValue">8</span>
+                </div>
+            </div>
+            
+            <div class="info-panel compact" style="font-size: 12px; line-height: 1.3;">
+                <strong>Quick Guide:</strong><br>
+                • Select tool: move/edit elements<br>
+                • Place tools: click canvas to add<br>
+                • Width/Height: platforms, clouds, swamps, rainbow<br>
+                • Size: triangles only<br>
+                • Coordinates: percentages<br>
+                • Goal: both unicorns reach rainbow
+            </div>
+        </div>
+        
+        <div class="canvas-container">
+            <canvas id="gameCanvas" width="1280" height="720"></canvas>
+            <div class="info-panel">
+                Mouse: <span id="mousePos">-</span> | 
+                Selected: <span id="selectedElement">None</span> | 
+                Tool: <span id="currentTool">Select</span>
+            </div>
+        </div>
+        
+        <div class="editor-panel">
+            <div class="save-load-section">
+                <h3>💾 Save/Load</h3>
+                <div class="input-group">
+                    <label>Level Number:</label>
+                    <input type="number" id="levelNumber" value="1" min="1" max="100">
+                </div>
+                
+                <div class="file-actions">
+                    <button class="save-btn" id="saveBtn">Save JSON</button>
+                    <button class="load-btn" id="loadBtn">Load</button>
+                    <button class="clear-btn" id="clearBtn">Clear All</button>
+                </div>
+                
+                <input type="file" id="fileInput" accept=".json" style="display: none;">
+                
+                <div class="input-group">
+                    <label>JSON Output:</label>
+                    <textarea id="jsonOutput" class="json-output" placeholder="JSON will appear here..."></textarea>
+                </div>
+            </div>
+            
+            <div class="tool-section">
+                <h3>📋 Elements</h3>
+                <div id="elementsList" style="max-height: 200px; overflow-y: auto; font-size: 12px;">
+                    <!-- Elements will be listed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        class LevelEditor {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.width = 1280;
+                this.height = 720;
+                
+                this.currentTool = 'select';
+                this.selectedElement = null;
+                this.isDragging = false;
+                this.dragOffset = { x: 0, y: 0 };
+                
+                this.levelData = {
+                    level: { name: "New Level" },
+                    background: { image: null },
+                    unicorns: { unicorn1: { x: 15, y: null }, unicorn2: { x: 45, y: null } },
+                    platforms: [],
+                    trees: [],
+                    clouds: [],
+                    white_items: [],
+                    black_items: [],
+                    triangles: [],
+                    swamps: [],
+                    rainbow: null
+                };
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.updateUI();
+                this.render();
+            }
+            
+            setupEventListeners() {
+                // Tool buttons
+                document.getElementById('selectTool').addEventListener('click', () => this.setTool('select'));
+                document.getElementById('unicornTool').addEventListener('click', () => this.setTool('unicorn'));
+                document.getElementById('platformTool').addEventListener('click', () => this.setTool('platform'));
+                document.getElementById('treeTool').addEventListener('click', () => this.setTool('tree'));
+                document.getElementById('cloudTool').addEventListener('click', () => this.setTool('cloud'));
+                document.getElementById('itemTool').addEventListener('click', () => this.setTool('item'));
+                document.getElementById('triangleTool').addEventListener('click', () => this.setTool('triangle'));
+                document.getElementById('swampTool').addEventListener('click', () => this.setTool('swamp'));
+                document.getElementById('rainbowTool').addEventListener('click', () => this.setTool('rainbow'));
+                document.getElementById('deleteTool').addEventListener('click', () => this.setTool('delete'));
+                
+                // Canvas events
+                this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+                this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+                this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
+                
+                // UI controls
+                document.getElementById('levelName').addEventListener('input', (e) => {
+                    this.levelData.level.name = e.target.value;
+                    this.updateJSON();
+                });
+                
+                document.getElementById('alphaSlider').addEventListener('input', (e) => {
+                    document.getElementById('alphaValue').textContent = e.target.value;
+                });
+                
+                document.getElementById('sizeSlider').addEventListener('input', (e) => {
+                    document.getElementById('sizeValue').textContent = e.target.value;
+                });
+                
+                document.getElementById('widthSlider').addEventListener('input', (e) => {
+                    document.getElementById('widthValue').textContent = e.target.value;
+                });
+                
+                document.getElementById('heightSlider').addEventListener('input', (e) => {
+                    document.getElementById('heightValue').textContent = e.target.value;
+                });
+                
+                // Edit controls
+                document.getElementById('editWidthSlider').addEventListener('input', (e) => {
+                    document.getElementById('editWidthValue').textContent = e.target.value;
+                    this.updateSelectedElementProperty('width', parseInt(e.target.value));
+                });
+                
+                document.getElementById('editHeightSlider').addEventListener('input', (e) => {
+                    document.getElementById('editHeightValue').textContent = e.target.value;
+                    this.updateSelectedElementProperty('height', parseInt(e.target.value));
+                });
+                
+                document.getElementById('editSizeSlider').addEventListener('input', (e) => {
+                    document.getElementById('editSizeValue').textContent = e.target.value;
+                    this.updateSelectedElementProperty('size', parseInt(e.target.value));
+                });
+                
+                document.getElementById('editColorPicker').addEventListener('input', (e) => {
+                    const color = this.hexToRgb(e.target.value);
+                    this.updateSelectedElementProperty('color', color);
+                });
+                
+                document.getElementById('editAlphaSlider').addEventListener('input', (e) => {
+                    document.getElementById('editAlphaValue').textContent = e.target.value;
+                    this.updateSelectedElementProperty('alpha', parseInt(e.target.value));
+                });
+                
+                document.getElementById('applyChangesBtn').addEventListener('click', () => {
+                    this.applySelectedElementChanges();
+                });
+                
+                // File operations
+                document.getElementById('saveBtn').addEventListener('click', () => this.saveLevel());
+                document.getElementById('loadBtn').addEventListener('click', () => this.loadLevel());
+                document.getElementById('clearBtn').addEventListener('click', () => this.clearLevel());
+                document.getElementById('fileInput').addEventListener('change', (e) => this.handleFileLoad(e));
+            }
+            
+            setTool(tool) {
+                this.currentTool = tool;
+                this.selectedElement = null;
+                this.hideEditPanel();
+                this.updateUI();
+            }
+            
+            getMousePos(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const scaleX = this.canvas.width / rect.width;
+                const scaleY = this.canvas.height / rect.height;
+                
+                const x = (e.clientX - rect.left) * scaleX;
+                const y = (e.clientY - rect.top) * scaleY;
+                
+                // Clamp to canvas bounds
+                return {
+                    x: Math.max(0, Math.min(this.width, x)),
+                    y: Math.max(0, Math.min(this.height, y))
+                };
+            }
+            
+            screenToPercent(x, y) {
+                return {
+                    x: (x / this.width) * 100,
+                    y: ((this.height - y) / this.height) * 100
+                };
+            }
+            
+            percentToScreen(x, y) {
+                return {
+                    x: (x / 100) * this.width,
+                    y: this.height - (y / 100) * this.height
+                };
+            }
+            
+            onMouseDown(e) {
+                const pos = this.getMousePos(e);
+                const percent = this.screenToPercent(pos.x, pos.y);
+                
+                if (this.currentTool === 'select') {
+                    this.selectedElement = this.findElementAt(pos.x, pos.y);
+                    if (this.selectedElement) {
+                        this.isDragging = true;
+                        const elementPos = this.getElementPosition(this.selectedElement);
+                        this.dragOffset = {
+                            x: pos.x - elementPos.x,
+                            y: pos.y - elementPos.y
+                        };
+                        this.populateEditPanel();
+                    } else {
+                        this.hideEditPanel();
+                    }
+                } else if (this.currentTool === 'unicorn') {
+                    // Toggle between unicorn1 and unicorn2
+                    const unicorn1Pos = this.percentToScreen(this.levelData.unicorns.unicorn1.x, 50);
+                    const unicorn2Pos = this.percentToScreen(this.levelData.unicorns.unicorn2.x, 50);
+                    
+                    const dist1 = Math.sqrt(Math.pow(pos.x - unicorn1Pos.x, 2) + Math.pow(pos.y - unicorn1Pos.y, 2));
+                    const dist2 = Math.sqrt(Math.pow(pos.x - unicorn2Pos.x, 2) + Math.pow(pos.y - unicorn2Pos.y, 2));
+                    
+                    if (dist1 < dist2) {
+                        this.levelData.unicorns.unicorn1.x = percent.x;
+                        this.levelData.unicorns.unicorn1.y = percent.y;
+                    } else {
+                        this.levelData.unicorns.unicorn2.x = percent.x;
+                        this.levelData.unicorns.unicorn2.y = percent.y;
+                    }
+                } else if (this.currentTool === 'platform') {
+                    this.addPlatform(percent.x, percent.y);
+                } else if (this.currentTool === 'tree') {
+                    this.addTree(percent.x, percent.y);
+                } else if (this.currentTool === 'cloud') {
+                    this.addCloud(percent.x, percent.y);
+                } else if (this.currentTool === 'item') {
+                    this.addItem(percent.x, percent.y);
+                } else if (this.currentTool === 'triangle') {
+                    this.addTriangle(percent.x, percent.y);
+                } else if (this.currentTool === 'swamp') {
+                    this.addSwamp(percent.x, percent.y);
+                } else if (this.currentTool === 'rainbow') {
+                    this.addRainbow(percent.x, percent.y);
+                } else if (this.currentTool === 'delete') {
+                    this.deleteElementAt(pos.x, pos.y);
+                }
+                
+                this.updateUI();
+                this.render();
+            }
+            
+            onMouseMove(e) {
+                const pos = this.getMousePos(e);
+                const percent = this.screenToPercent(pos.x, pos.y);
+                
+                document.getElementById('mousePos').textContent = `${percent.x.toFixed(1)}%, ${percent.y.toFixed(1)}%`;
+                
+                if (this.isDragging && this.selectedElement) {
+                    const newPos = this.screenToPercent(pos.x - this.dragOffset.x, pos.y - this.dragOffset.y);
+                    this.moveElement(this.selectedElement, newPos.x, newPos.y);
+                    this.render();
+                }
+            }
+            
+            onMouseUp(e) {
+                this.isDragging = false;
+                this.updateJSON();
+            }
+            
+            addPlatform(x, y) {
+                const color = this.hexToRgb(document.getElementById('colorPicker').value);
+                const alpha = parseInt(document.getElementById('alphaSlider').value);
+                const width = parseInt(document.getElementById('widthSlider').value);
+                const height = parseInt(document.getElementById('heightSlider').value);
+                
+                this.levelData.platforms.push({
+                    x: x,
+                    y: y,
+                    width: width,
+                    height: height,
+                    color: color,
+                    alpha: alpha
+                });
+            }
+            
+            addTree(x, y) {
+                this.levelData.trees.push({
+                    x: x,
+                    y: y,
+                    width: 8,
+                    height: 25
+                });
+            }
+            
+            addCloud(x, y) {
+                const alpha = parseInt(document.getElementById('alphaSlider').value);
+                const width = parseInt(document.getElementById('widthSlider').value);
+                const height = parseInt(document.getElementById('heightSlider').value);
+                
+                this.levelData.clouds.push({
+                    x: x,
+                    y: y,
+                    width: width,
+                    height: height,
+                    alpha: alpha
+                });
+            }
+            
+            addItem(x, y) {
+                const itemType = document.getElementById('itemType').value;
+                const items = itemType === 'white' ? this.levelData.white_items : this.levelData.black_items;
+                
+                items.push({
+                    x: x,
+                    y: y
+                });
+            }
+            
+            addTriangle(x, y) {
+                const color = this.hexToRgb(document.getElementById('colorPicker').value);
+                const size = parseInt(document.getElementById('sizeSlider').value);
+                
+                this.levelData.triangles.push({
+                    x: x,
+                    y: y,
+                    size: size,
+                    color: color
+                });
+            }
+            
+            addSwamp(x, y) {
+                const color = this.hexToRgb(document.getElementById('colorPicker').value);
+                const width = parseInt(document.getElementById('widthSlider').value);
+                const height = parseInt(document.getElementById('heightSlider').value);
+                
+                this.levelData.swamps.push({
+                    x: x,
+                    y: y,
+                    width: width,
+                    height: height,
+                    color: color
+                });
+            }
+            
+            addRainbow(x, y) {
+                // Note: Game flips rainbow X coordinate, so we need to store the flipped value
+                // When user clicks at screen position, convert to the coordinate the game expects
+                const gameExpectedX = 100 - x; // Flip the X coordinate
+                const width = parseInt(document.getElementById('widthSlider').value);
+                const height = parseInt(document.getElementById('heightSlider').value);
+                
+                this.levelData.rainbow = {
+                    x: gameExpectedX,
+                    y: y,
+                    width: width,
+                    height: height
+                };
+            }
+            
+            hexToRgb(hex) {
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+                return [r, g, b];
+            }
+            
+            findElementAt(x, y) {
+                // Check unicorns first
+                const unicorn1Pos = this.percentToScreen(this.levelData.unicorns.unicorn1.x, 50);
+                const unicorn2Pos = this.percentToScreen(this.levelData.unicorns.unicorn2.x, 50);
+                
+                if (this.isPointInRect(x, y, unicorn1Pos.x - 16, unicorn1Pos.y - 16, 32, 32)) {
+                    return { type: 'unicorn', data: this.levelData.unicorns.unicorn1, key: 'unicorn1' };
+                }
+                if (this.isPointInRect(x, y, unicorn2Pos.x - 16, unicorn2Pos.y - 16, 32, 32)) {
+                    return { type: 'unicorn', data: this.levelData.unicorns.unicorn2, key: 'unicorn2' };
+                }
+                
+                // Check platforms
+                const platforms = this.levelData.platforms || [];
+                for (let i = 0; i < platforms.length; i++) {
+                    const platform = platforms[i];
+                    const pos = this.percentToScreen(platform.x, platform.y);
+                    const width = (platform.width / 100) * this.width;
+                    const height = (platform.height / 100) * this.height;
+                    
+                    if (this.isPointInRect(x, y, pos.x, pos.y, width, height)) {
+                        return { type: 'platform', data: platform, array: platforms, index: i };
+                    }
+                }
+                
+                // Check trees
+                const trees = this.levelData.trees || [];
+                for (let i = 0; i < trees.length; i++) {
+                    const tree = trees[i];
+                    const pos = this.percentToScreen(tree.x, tree.y);
+                    const width = (tree.width / 100) * this.width;
+                    const height = (tree.height / 100) * this.height;
+                    
+                    if (this.isPointInRect(x, y, pos.x, pos.y, width, height)) {
+                        return { type: 'tree', data: tree, array: trees, index: i };
+                    }
+                }
+                
+                // Check clouds
+                const clouds = this.levelData.clouds || [];
+                for (let i = 0; i < clouds.length; i++) {
+                    const cloud = clouds[i];
+                    const pos = this.percentToScreen(cloud.x, cloud.y);
+                    const width = (cloud.width / 100) * this.width;
+                    const height = (cloud.height / 100) * this.height;
+                    
+                    if (this.isPointInRect(x, y, pos.x, pos.y, width, height)) {
+                        return { type: 'cloud', data: cloud, array: clouds, index: i };
+                    }
+                }
+                
+                // Check white items
+                const whiteItems = this.levelData.white_items || [];
+                for (let i = 0; i < whiteItems.length; i++) {
+                    const item = whiteItems[i];
+                    const pos = this.percentToScreen(item.x, item.y);
+                    
+                    if (this.isPointInRect(x, y, pos.x - 10, pos.y - 10, 20, 20)) {
+                        return { type: 'white_item', data: item, array: whiteItems, index: i };
+                    }
+                }
+                
+                // Check black items
+                const blackItems = this.levelData.black_items || [];
+                for (let i = 0; i < blackItems.length; i++) {
+                    const item = blackItems[i];
+                    const pos = this.percentToScreen(item.x, item.y);
+                    
+                    if (this.isPointInRect(x, y, pos.x - 10, pos.y - 10, 20, 20)) {
+                        return { type: 'black_item', data: item, array: blackItems, index: i };
+                    }
+                }
+                
+                // Check triangles
+                const triangles = this.levelData.triangles || [];
+                for (let i = 0; i < triangles.length; i++) {
+                    const triangle = triangles[i];
+                    const pos = this.percentToScreen(triangle.x, triangle.y);
+                    const size = (triangle.size / 100) * this.width;
+                    
+                    if (this.isPointInRect(x, y, pos.x, pos.y, size, size)) {
+                        return { type: 'triangle', data: triangle, array: triangles, index: i };
+                    }
+                }
+                
+                // Check swamps
+                const swamps = this.levelData.swamps || [];
+                for (let i = 0; i < swamps.length; i++) {
+                    const swamp = swamps[i];
+                    const pos = this.percentToScreen(swamp.x, swamp.y);
+                    const width = (swamp.width / 100) * this.width;
+                    const height = (swamp.height / 100) * this.height;
+                    
+                    if (this.isPointInRect(x, y, pos.x, pos.y, width, height)) {
+                        return { type: 'swamp', data: swamp, array: swamps, index: i };
+                    }
+                }
+                
+                // Check rainbow
+                if (this.levelData.rainbow) {
+                    // Note: Game flips rainbow X coordinate
+                    const gameX = this.width - (this.levelData.rainbow.x / 100) * this.width;
+                    const gameY = this.height - (this.levelData.rainbow.y / 100) * this.height;
+                    const width = (this.levelData.rainbow.width / 100) * this.width;
+                    const height = (this.levelData.rainbow.height / 100) * this.height;
+                    
+                    if (this.isPointInRect(x, y, gameX, gameY, width, height)) {
+                        return { type: 'rainbow', data: this.levelData.rainbow };
+                    }
+                }
+                
+                return null;
+            }
+            
+            isPointInRect(px, py, x, y, width, height) {
+                return px >= x && px <= x + width && py >= y && py <= y + height;
+            }
+            
+            getElementPosition(element) {
+                if (element.type === 'unicorn') {
+                    const pos = this.percentToScreen(element.data.x, 50);
+                    return { x: pos.x, y: pos.y };
+                } else {
+                    const pos = this.percentToScreen(element.data.x, element.data.y);
+                    return { x: pos.x, y: pos.y };
+                }
+            }
+            
+            moveElement(element, x, y) {
+                if (element.type === 'unicorn') {
+                    element.data.x = x;
+                    element.data.y = y;
+                } else if (element.type === 'rainbow') {
+                    // Rainbow X coordinate is flipped in the game
+                    element.data.x = 100 - x;
+                    element.data.y = y;
+                } else {
+                    element.data.x = x;
+                    element.data.y = y;
+                }
+            }
+            
+            deleteElementAt(x, y) {
+                const element = this.findElementAt(x, y);
+                if (element) {
+                    if (element.type === 'unicorn') {
+                        // Reset unicorn to default position instead of deleting
+                        if (element.key === 'unicorn1') {
+                            this.levelData.unicorns.unicorn1.x = 15;
+                            this.levelData.unicorns.unicorn1.y = null;
+                        } else {
+                            this.levelData.unicorns.unicorn2.x = 45;
+                            this.levelData.unicorns.unicorn2.y = null;
+                        }
+                    } else if (element.type === 'rainbow') {
+                        this.levelData.rainbow = null;
+                    } else if (element.array) {
+                        element.array.splice(element.index, 1);
+                    }
+                    this.selectedElement = null;
+                    return true;
+                }
+                return false;
+            }
+            
+            render() {
+                // Clear canvas
+                this.ctx.fillStyle = '#87CEEB';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                
+                // Draw ground line
+                this.ctx.strokeStyle = '#8B4513';
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, this.height - 100);
+                this.ctx.lineTo(this.width, this.height - 100);
+                this.ctx.stroke();
+                
+                // Draw grid for better proportion understanding
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                this.ctx.lineWidth = 1;
+                
+                // Vertical grid lines (every 10%)
+                for (let i = 1; i < 10; i++) {
+                    const x = (i * this.width) / 10;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, this.height);
+                    this.ctx.stroke();
+                }
+                
+                // Horizontal grid lines (every 10%)
+                for (let i = 1; i < 10; i++) {
+                    const y = (i * this.height) / 10;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(this.width, y);
+                    this.ctx.stroke();
+                }
+                
+                // Draw platforms
+                (this.levelData.platforms || []).forEach(platform => {
+                    const pos = this.percentToScreen(platform.x, platform.y);
+                    const width = (platform.width / 100) * this.width;
+                    const height = (platform.height / 100) * this.height;
+                    
+                    this.ctx.save();
+                    this.ctx.globalAlpha = platform.alpha / 255;
+                    this.ctx.fillStyle = `rgb(${platform.color[0]}, ${platform.color[1]}, ${platform.color[2]})`;
+                    this.ctx.fillRect(pos.x, pos.y, width, height);
+                    this.ctx.restore();
+                });
+                
+                // Draw trees
+                (this.levelData.trees || []).forEach(tree => {
+                    const pos = this.percentToScreen(tree.x, tree.y);
+                    const width = (tree.width / 100) * this.width;
+                    const height = (tree.height / 100) * this.height;
+                    
+                    // Draw trunk
+                    const trunkWidth = width * 0.3;
+                    const trunkHeight = height * 0.7;
+                    const trunkX = pos.x + (width - trunkWidth) / 2;
+                    const trunkY = pos.y + height - trunkHeight;
+                    
+                    this.ctx.fillStyle = '#8B4513';
+                    this.ctx.fillRect(trunkX, trunkY, trunkWidth, trunkHeight);
+                    
+                    // Draw foliage
+                    const foliageRadius = width * 0.6;
+                    const foliageX = pos.x + width / 2;
+                    const foliageY = pos.y + height * 0.3;
+                    
+                    this.ctx.fillStyle = '#228B22';
+                    this.ctx.beginPath();
+                    this.ctx.arc(foliageX, foliageY, foliageRadius, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+                
+                // Draw clouds
+                (this.levelData.clouds || []).forEach(cloud => {
+                    const pos = this.percentToScreen(cloud.x, cloud.y);
+                    const width = (cloud.width / 100) * this.width;
+                    const height = (cloud.height / 100) * this.height;
+                    
+                    this.ctx.save();
+                    this.ctx.globalAlpha = cloud.alpha / 255;
+                    this.ctx.fillStyle = '#fff';
+                    
+                    // Draw cloud as overlapping circles
+                    const circles = 5;
+                    const circleRadius = width / (circles * 1.5);
+                    
+                    for (let i = 0; i < circles; i++) {
+                        const circleX = pos.x + (i * circleRadius * 1.2);
+                        const circleY = pos.y + Math.sin(i * 0.5) * (height / 4);
+                        
+                        this.ctx.beginPath();
+                        this.ctx.arc(circleX, circleY, circleRadius, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    }
+                    
+                    this.ctx.restore();
+                });
+                
+                // Draw items
+                (this.levelData.white_items || []).forEach(item => {
+                    const pos = this.percentToScreen(item.x, item.y);
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.fillRect(pos.x - 10, pos.y - 10, 20, 20);
+                    this.ctx.strokeStyle = '#000';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.strokeRect(pos.x - 10, pos.y - 10, 20, 20);
+                });
+                
+                (this.levelData.black_items || []).forEach(item => {
+                    const pos = this.percentToScreen(item.x, item.y);
+                    this.ctx.fillStyle = '#000';
+                    this.ctx.fillRect(pos.x - 10, pos.y - 10, 20, 20);
+                    this.ctx.strokeStyle = '#fff';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.strokeRect(pos.x - 10, pos.y - 10, 20, 20);
+                });
+                
+                // Draw triangles
+                (this.levelData.triangles || []).forEach(triangle => {
+                    const pos = this.percentToScreen(triangle.x, triangle.y);
+                    const size = (triangle.size / 100) * this.width;
+                    
+                    this.ctx.fillStyle = `rgb(${triangle.color[0]}, ${triangle.color[1]}, ${triangle.color[2]})`;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(pos.x + size / 2, pos.y);
+                    this.ctx.lineTo(pos.x, pos.y + size);
+                    this.ctx.lineTo(pos.x + size, pos.y + size);
+                    this.ctx.closePath();
+                    this.ctx.fill();
+                    
+                    this.ctx.strokeStyle = '#000';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.stroke();
+                });
+                
+                // Draw swamps
+                (this.levelData.swamps || []).forEach(swamp => {
+                    const pos = this.percentToScreen(swamp.x, swamp.y);
+                    const width = (swamp.width / 100) * this.width;
+                    const height = (swamp.height / 100) * this.height;
+                    
+                    this.ctx.fillStyle = `rgb(${swamp.color[0]}, ${swamp.color[1]}, ${swamp.color[2]})`;
+                    this.ctx.fillRect(pos.x, pos.y, width, height);
+                    
+                    // Add darker border
+                    this.ctx.strokeStyle = '#654321';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.strokeRect(pos.x, pos.y, width, height);
+                    
+                    // Add some bubbles for swamp effect
+                    const time = Date.now() * 0.003;
+                    this.ctx.fillStyle = 'rgba(101, 67, 33, 0.6)';
+                    
+                    for (let i = 0; i < 3; i++) {
+                        const bubbleX = pos.x + (width * 0.2) + (i * width * 0.3);
+                        const bubbleY = pos.y + (height * 0.3) + Math.sin(time + i * 2) * 5;
+                        const bubbleSize = 3 + Math.sin(time * 2 + i) * 2;
+                        
+                        this.ctx.beginPath();
+                        this.ctx.arc(bubbleX, bubbleY, bubbleSize, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    }
+                });
+                
+                // Draw rainbow
+                if (this.levelData.rainbow) {
+                    // Note: Game flips rainbow X coordinate, so we need to match that
+                    const gameX = this.width - (this.levelData.rainbow.x / 100) * this.width;
+                    const gameY = this.height - (this.levelData.rainbow.y / 100) * this.height;
+                    const width = (this.levelData.rainbow.width / 100) * this.width;
+                    const height = (this.levelData.rainbow.height / 100) * this.height;
+                    const pos = { x: gameX, y: gameY };
+                    
+                    const colors = [
+                        [255, 0, 0], [255, 165, 0], [255, 255, 0],
+                        [0, 255, 0], [0, 0, 255], [75, 0, 130], [238, 130, 238]
+                    ];
+                    
+                    this.ctx.save();
+                    this.ctx.globalAlpha = 0.7;
+                    
+                    const bandHeight = height / colors.length;
+                    colors.forEach((color, index) => {
+                        this.ctx.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+                        this.ctx.fillRect(pos.x, pos.y + (index * bandHeight), width, bandHeight);
+                    });
+                    
+                    this.ctx.restore();
+                }
+                
+                // Draw unicorns
+                const unicorn1Pos = this.percentToScreen(this.levelData.unicorns.unicorn1.x, 50);
+                const unicorn2Pos = this.percentToScreen(this.levelData.unicorns.unicorn2.x, 50);
+                
+                // Unicorn 1 (white)
+                this.ctx.fillStyle = '#fff';
+                this.ctx.fillRect(unicorn1Pos.x - 16, unicorn1Pos.y - 16, 32, 32);
+                this.ctx.strokeStyle = '#000';
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeRect(unicorn1Pos.x - 16, unicorn1Pos.y - 16, 32, 32);
+                this.ctx.fillStyle = '#000';
+                this.ctx.font = '12px monospace';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('U1', unicorn1Pos.x, unicorn1Pos.y + 4);
+                
+                // Unicorn 2 (black)
+                this.ctx.fillStyle = '#000';
+                this.ctx.fillRect(unicorn2Pos.x - 16, unicorn2Pos.y - 16, 32, 32);
+                this.ctx.strokeStyle = '#fff';
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeRect(unicorn2Pos.x - 16, unicorn2Pos.y - 16, 32, 32);
+                this.ctx.fillStyle = '#fff';
+                this.ctx.font = '12px monospace';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('U2', unicorn2Pos.x, unicorn2Pos.y + 4);
+                
+                // Draw selection indicator
+                if (this.selectedElement) {
+                    this.ctx.strokeStyle = '#ff0000';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.setLineDash([5, 5]);
+                    
+                    if (this.selectedElement.type === 'unicorn') {
+                        const pos = this.percentToScreen(this.selectedElement.data.x, 50);
+                        this.ctx.strokeRect(pos.x - 18, pos.y - 18, 36, 36);
+                    } else if (this.selectedElement.type === 'platform') {
+                        const pos = this.percentToScreen(this.selectedElement.data.x, this.selectedElement.data.y);
+                        const width = (this.selectedElement.data.width / 100) * this.width;
+                        const height = (this.selectedElement.data.height / 100) * this.height;
+                        this.ctx.strokeRect(pos.x - 2, pos.y - 2, width + 4, height + 4);
+                    } else if (this.selectedElement.type === 'tree') {
+                        const pos = this.percentToScreen(this.selectedElement.data.x, this.selectedElement.data.y);
+                        const width = (this.selectedElement.data.width / 100) * this.width;
+                        const height = (this.selectedElement.data.height / 100) * this.height;
+                        this.ctx.strokeRect(pos.x - 2, pos.y - 2, width + 4, height + 4);
+                    } else if (this.selectedElement.type === 'cloud') {
+                        const pos = this.percentToScreen(this.selectedElement.data.x, this.selectedElement.data.y);
+                        const width = (this.selectedElement.data.width / 100) * this.width;
+                        const height = (this.selectedElement.data.height / 100) * this.height;
+                        this.ctx.strokeRect(pos.x - 2, pos.y - 2, width + 4, height + 4);
+                    } else if (this.selectedElement.type === 'white_item' || this.selectedElement.type === 'black_item') {
+                        const pos = this.percentToScreen(this.selectedElement.data.x, this.selectedElement.data.y);
+                        this.ctx.strokeRect(pos.x - 12, pos.y - 12, 24, 24);
+                    } else if (this.selectedElement.type === 'triangle') {
+                        const pos = this.percentToScreen(this.selectedElement.data.x, this.selectedElement.data.y);
+                        const size = (this.selectedElement.data.size / 100) * this.width;
+                        this.ctx.strokeRect(pos.x - 2, pos.y - 2, size + 4, size + 4);
+                    } else if (this.selectedElement.type === 'swamp') {
+                        const pos = this.percentToScreen(this.selectedElement.data.x, this.selectedElement.data.y);
+                        const width = (this.selectedElement.data.width / 100) * this.width;
+                        const height = (this.selectedElement.data.height / 100) * this.height;
+                        this.ctx.strokeRect(pos.x - 2, pos.y - 2, width + 4, height + 4);
+                    } else if (this.selectedElement.type === 'rainbow') {
+                        // Note: Game flips rainbow X coordinate
+                        const gameX = this.width - (this.selectedElement.data.x / 100) * this.width;
+                        const gameY = this.height - (this.selectedElement.data.y / 100) * this.height;
+                        const width = (this.selectedElement.data.width / 100) * this.width;
+                        const height = (this.selectedElement.data.height / 100) * this.height;
+                        this.ctx.strokeRect(gameX - 2, gameY - 2, width + 4, height + 4);
+                    }
+                    
+                    this.ctx.setLineDash([]);
+                }
+            }
+            
+            updateUI() {
+                // Update active tool button
+                document.querySelectorAll('.tool-button').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(this.currentTool + 'Tool').classList.add('active');
+                
+                // Update current tool display
+                document.getElementById('currentTool').textContent = this.currentTool;
+                
+                // Update selected element display
+                if (this.selectedElement) {
+                    let elementName = this.selectedElement.type;
+                    if (this.selectedElement.type === 'unicorn') {
+                        elementName = `Unicorn ${this.selectedElement.key === 'unicorn1' ? '1' : '2'}`;
+                    } else if (this.selectedElement.type === 'white_item') {
+                        elementName = 'White Item';
+                    } else if (this.selectedElement.type === 'black_item') {
+                        elementName = 'Black Item';
+                    } else {
+                        elementName = this.selectedElement.type.charAt(0).toUpperCase() + this.selectedElement.type.slice(1);
+                    }
+                    document.getElementById('selectedElement').textContent = elementName;
+                } else {
+                    document.getElementById('selectedElement').textContent = 'None';
+                }
+                
+                // Update elements list
+                this.updateElementsList();
+                
+                // Update JSON
+                this.updateJSON();
+            }
+            
+            populateEditPanel() {
+                if (!this.selectedElement) {
+                    this.hideEditPanel();
+                    return;
+                }
+                
+                const editSection = document.getElementById('editSection');
+                editSection.style.display = 'block';
+                
+                // Set element type
+                let typeName = this.selectedElement.type;
+                if (this.selectedElement.type === 'unicorn') {
+                    typeName = `Unicorn ${this.selectedElement.key === 'unicorn1' ? '1' : '2'}`;
+                } else if (this.selectedElement.type === 'white_item') {
+                    typeName = 'White Item';
+                } else if (this.selectedElement.type === 'black_item') {
+                    typeName = 'Black Item';
+                } else {
+                    typeName = this.selectedElement.type.charAt(0).toUpperCase() + this.selectedElement.type.slice(1);
+                }
+                document.getElementById('selectedType').textContent = typeName;
+                
+                // Hide all edit groups first
+                document.getElementById('editWidthGroup').style.display = 'none';
+                document.getElementById('editHeightGroup').style.display = 'none';
+                document.getElementById('editSizeGroup').style.display = 'none';
+                document.getElementById('editColorGroup').style.display = 'none';
+                document.getElementById('editAlphaGroup').style.display = 'none';
+                
+                const data = this.selectedElement.data;
+                
+                // Show relevant controls based on element type
+                if (this.selectedElement.type === 'platform' || this.selectedElement.type === 'cloud' || 
+                    this.selectedElement.type === 'swamp' || this.selectedElement.type === 'rainbow') {
+                    
+                    if (data.width !== undefined) {
+                        document.getElementById('editWidthGroup').style.display = 'block';
+                        document.getElementById('editWidthSlider').value = data.width;
+                        document.getElementById('editWidthValue').textContent = data.width;
+                    }
+                    
+                    if (data.height !== undefined) {
+                        document.getElementById('editHeightGroup').style.display = 'block';
+                        document.getElementById('editHeightSlider').value = data.height;
+                        document.getElementById('editHeightValue').textContent = data.height;
+                    }
+                }
+                
+                if (this.selectedElement.type === 'triangle') {
+                    document.getElementById('editSizeGroup').style.display = 'block';
+                    document.getElementById('editSizeSlider').value = data.size;
+                    document.getElementById('editSizeValue').textContent = data.size;
+                }
+                
+                if (data.color !== undefined) {
+                    document.getElementById('editColorGroup').style.display = 'block';
+                    const hexColor = this.rgbToHex(data.color);
+                    document.getElementById('editColorPicker').value = hexColor;
+                }
+                
+                if (data.alpha !== undefined) {
+                    document.getElementById('editAlphaGroup').style.display = 'block';
+                    document.getElementById('editAlphaSlider').value = data.alpha;
+                    document.getElementById('editAlphaValue').textContent = data.alpha;
+                }
+            }
+            
+            hideEditPanel() {
+                document.getElementById('editSection').style.display = 'none';
+            }
+            
+            updateSelectedElementProperty(property, value) {
+                if (!this.selectedElement) return;
+                
+                this.selectedElement.data[property] = value;
+                this.render();
+                this.updateJSON();
+            }
+            
+            applySelectedElementChanges() {
+                if (!this.selectedElement) return;
+                
+                // Changes are already applied real-time, just update UI
+                this.updateUI();
+                this.render();
+            }
+            
+            rgbToHex(rgb) {
+                const toHex = (n) => {
+                    const hex = n.toString(16);
+                    return hex.length === 1 ? '0' + hex : hex;
+                };
+                return '#' + toHex(rgb[0]) + toHex(rgb[1]) + toHex(rgb[2]);
+            }
+            
+            ensureLevelDataStructure() {
+                // Ensure all required properties exist for backward compatibility
+                if (!this.levelData.level) this.levelData.level = { name: "Loaded Level" };
+                if (!this.levelData.background) this.levelData.background = { image: null };
+                if (!this.levelData.unicorns) this.levelData.unicorns = { unicorn1: { x: 15, y: null }, unicorn2: { x: 45, y: null } };
+                if (!this.levelData.platforms) this.levelData.platforms = [];
+                if (!this.levelData.trees) this.levelData.trees = [];
+                if (!this.levelData.clouds) this.levelData.clouds = [];
+                if (!this.levelData.white_items) this.levelData.white_items = [];
+                if (!this.levelData.black_items) this.levelData.black_items = [];
+                if (!this.levelData.triangles) this.levelData.triangles = [];
+                if (!this.levelData.swamps) this.levelData.swamps = [];
+                if (this.levelData.rainbow === undefined) this.levelData.rainbow = null;
+            }
+            
+            updateElementsList() {
+                const list = document.getElementById('elementsList');
+                list.innerHTML = '';
+                
+                const addListItem = (type, items) => {
+                    if (items && items.length > 0) {
+                        const header = document.createElement('div');
+                        header.style.fontWeight = 'bold';
+                        header.textContent = `${type} (${items.length})`;
+                        list.appendChild(header);
+                    }
+                };
+                
+                addListItem('Platforms', this.levelData.platforms || []);
+                addListItem('Trees', this.levelData.trees || []);
+                addListItem('Clouds', this.levelData.clouds || []);
+                addListItem('White Items', this.levelData.white_items || []);
+                addListItem('Black Items', this.levelData.black_items || []);
+                addListItem('Triangles', this.levelData.triangles || []);
+                addListItem('Swamps', this.levelData.swamps || []);
+                if (this.levelData.rainbow) addListItem('Rainbow', [this.levelData.rainbow]);
+            }
+            
+            updateJSON() {
+                const json = JSON.stringify(this.levelData, null, 2);
+                document.getElementById('jsonOutput').value = json;
+            }
+            
+            saveLevel() {
+                const levelNum = document.getElementById('levelNumber').value;
+                const filename = `level${levelNum}.json`;
+                const json = JSON.stringify(this.levelData, null, 2);
+                
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+            
+            loadLevel() {
+                document.getElementById('fileInput').click();
+            }
+            
+            handleFileLoad(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            this.levelData = JSON.parse(e.target.result);
+                            
+                            // Ensure all required arrays exist for backward compatibility
+                            this.ensureLevelDataStructure();
+                            
+                            document.getElementById('levelName').value = this.levelData.level.name;
+                            this.updateUI();
+                            this.render();
+                        } catch (error) {
+                            alert('Error loading file: ' + error.message);
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            }
+            
+            clearLevel() {
+                if (confirm('Are you sure you want to clear all elements?')) {
+                    this.levelData = {
+                        level: { name: "New Level" },
+                        background: { image: null },
+                        unicorns: { unicorn1: { x: 15, y: null }, unicorn2: { x: 45, y: null } },
+                        platforms: [],
+                        trees: [],
+                        clouds: [],
+                        white_items: [],
+                        black_items: [],
+                        triangles: [],
+                        swamps: [],
+                        rainbow: null
+                    };
+                    
+                    document.getElementById('levelName').value = "New Level";
+                    this.updateUI();
+                    this.render();
+                }
+            }
+        }
+        
+        // Initialize the level editor
+        const editor = new LevelEditor();
+    </script>
+</body>
+</html>

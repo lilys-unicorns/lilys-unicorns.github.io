@@ -1,0 +1,95 @@
+{
+  "level": {
+    "name": "Test Level - Width/Height"
+  },
+  "background": {
+    "image": null
+  },
+  "unicorns": {
+    "unicorn1": {
+      "x": 10,
+      "y": null
+    },
+    "unicorn2": {
+      "x": 90,
+      "y": null
+    }
+  },
+  "platforms": [
+    {
+      "x": 20,
+      "y": 30,
+      "width": 25,
+      "height": 5,
+      "color": [255, 0, 0],
+      "alpha": 255
+    },
+    {
+      "x": 60,
+      "y": 50,
+      "width": 10,
+      "height": 15,
+      "color": [0, 255, 0],
+      "alpha": 200
+    }
+  ],
+  "trees": [
+    {
+      "x": 15,
+      "y": 70,
+      "width": 8,
+      "height": 25
+    }
+  ],
+  "clouds": [
+    {
+      "x": 30,
+      "y": 85,
+      "width": 30,
+      "height": 12,
+      "alpha": 150
+    },
+    {
+      "x": 70,
+      "y": 90,
+      "width": 8,
+      "height": 4,
+      "alpha": 180
+    }
+  ],
+  "white_items": [
+    {
+      "x": 35,
+      "y": 35
+    }
+  ],
+  "black_items": [
+    {
+      "x": 75,
+      "y": 55
+    }
+  ],
+  "triangles": [
+    {
+      "x": 50,
+      "y": 40,
+      "size": 6,
+      "color": [255, 0, 0]
+    }
+  ],
+  "swamps": [
+    {
+      "x": 40,
+      "y": 75,
+      "width": 20,
+      "height": 12,
+      "color": [139, 69, 19]
+    }
+  ],
+  "rainbow": {
+    "x": 15,
+    "y": 10,
+    "width": 35,
+    "height": 20
+  }
+}

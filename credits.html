@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lily's Unicorns - Credits</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #87CEEB 0%, #98E4FF 50%, #87CEEB 100%);
+            font-family: monospace;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .credits-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 600px;
+            margin: 20px;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            color: #4A90E2;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .unicorn-emoji {
+            font-size: 3em;
+            margin: 20px 0;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+        
+        .credits-section {
+            margin: 25px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            border-left: 4px solid #4A90E2;
+        }
+        
+        .credits-section h2 {
+            font-size: 1.4em;
+            color: #2C5AA0;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .credits-section p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin: 10px 0;
+        }
+        
+        .highlight {
+            color: #E74C3C;
+            font-weight: bold;
+        }
+        
+        .author-name {
+            color: #27AE60;
+            font-weight: bold;
+        }
+        
+        .license {
+            background: rgba(255, 235, 59, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 0.95em;
+        }
+        
+        .back-button {
+            background: linear-gradient(45deg, #4A90E2, #357ABD);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-family: monospace;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .back-button:active {
+            transform: translateY(0);
+        }
+        
+        .rainbow-text {
+            background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+        
+        .website-link {
+            color: #4A90E2;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .website-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="credits-container">
+        <h1 class="rainbow-text">🦄 Lily's Unicorns 🦄</h1>
+        
+        <div class="unicorn-emoji">🌈</div>
+        
+        <div class="credits-section">
+            <h2>💡 Concept & Ideas</h2>
+            <p><span class="highlight">Lily</span> and <span class="highlight">Shai</span></p>
+            <p>Creative minds behind this magical unicorn adventure!</p>
+        </div>
+        
+        <div class="credits-section">
+            <h2>🎵 Music</h2>
+            <p><span class="highlight">Old City Theme</span></p>
+            <p>Author: <span class="author-name">remaxim</span></p>
+            <p>Released: Friday, May 7, 2010</p>
+            <p>Source: <a href="https://opengameart.org/" class="website-link" target="_blank">OpenGameArt.org</a></p>
+            <div class="license">
+                <strong>License:</strong> CC-BY-SA 3.0
+            </div>
+        </div>
+        
+        <div class="credits-section">
+            <h2>🎨 Art Assets</h2>
+            <p><span class="highlight">Truffle pixel art unicorn</span></p>
+            <p>Author: <span class="author-name">COLEVID-19</span></p>
+            <p>Source: <a href="https://rcxno.itch.io/pixel-art-unicorn" class="website-link" target="_blank">itch.io/pixel-art-unicorn</a></p>
+            <div class="license">
+                <strong>License:</strong> Free to use for any commercial or non-commercial projects 😊
+            </div>
+        </div>
+        
+        <div class="credits-section">
+            <h2>🛠️ Development</h2>
+            <p>Built with <span class="highlight">HTML5 Canvas</span> and <span class="highlight">JavaScript</span></p>
+            <p>Level Editor for custom level creation</p>
+            <p>Physics engine with collision detection</p>
+            <p>Sprite animation system</p>
+        </div>
+        
+        <div class="credits-section">
+            <h2>🎮 Special Thanks</h2>
+            <p>To all the <span class="highlight">open source</span> contributors</p>
+            <p>And everyone who enjoys playing <span class="rainbow-text">Lily's Unicorns</span>!</p>
+        </div>
+        
+        <button class="back-button" onclick="goBack()">← Back to Game</button>
+    </div>
+    
+    <script>
+        function goBack() {
+            // Try to go back to the previous page
+            if (document.referrer && document.referrer.includes('lily_unicorns')) {
+                window.history.back();
+            } else {
+                // If no referrer or not from our game, go to main page
+                window.location.href = 'index.html';
+            }
+        }
+        
+        // Add some sparkle effects
+        function createSparkle() {
+            const sparkle = document.createElement('div');
+            sparkle.style.position = 'fixed';
+            sparkle.style.width = '4px';
+            sparkle.style.height = '4px';
+            sparkle.style.backgroundColor = '#FFD700';
+            sparkle.style.borderRadius = '50%';
+            sparkle.style.pointerEvents = 'none';
+            sparkle.style.zIndex = '1000';
+            sparkle.style.left = Math.random() * window.innerWidth + 'px';
+            sparkle.style.top = Math.random() * window.innerHeight + 'px';
+            sparkle.style.animation = 'sparkle 1.5s ease-out forwards';
+            
+            document.body.appendChild(sparkle);
+            
+            setTimeout(() => {
+                sparkle.remove();
+            }, 1500);
+        }
+        
+        // Add sparkle animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes sparkle {
+                0% {
+                    opacity: 0;
+                    transform: scale(0) rotate(0deg);
+                }
+                50% {
+                    opacity: 1;
+                    transform: scale(1) rotate(180deg);
+                }
+                100% {
+                    opacity: 0;
+                    transform: scale(0) rotate(360deg);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Create sparkles periodically
+        setInterval(createSparkle, 800);
+    </script>
+</body>
+</html>

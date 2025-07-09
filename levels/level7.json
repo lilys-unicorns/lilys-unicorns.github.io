@@ -1,0 +1,190 @@
+{
+  "level": {
+    "name": "Level 1 - Getting Started"
+  },
+  "background": {
+    "image": null
+  },
+  "unicorns": {
+    "unicorn1": {
+      "x": 15,
+      "y": null
+    },
+    "unicorn2": {
+      "x": 45,
+      "y": null
+    }
+  },
+  "platforms": [
+    {
+      "x": 15,
+      "y": 35,
+      "width": 12,
+      "height": 3,
+      "color": [255, 0, 0],
+      "alpha": 255
+    },
+    {
+      "x": 30,
+      "y": 55,
+      "width": 12,
+      "height": 3,
+      "color": [0, 255, 0],
+      "alpha": 180
+    },
+    {
+      "x": 45,
+      "y": 42,
+      "width": 12,
+      "height": 3,
+      "color": [0, 0, 255],
+      "alpha": 255
+    },
+    {
+      "x": 60,
+      "y": 70,
+      "width": 12,
+      "height": 3,
+      "color": [255, 255, 0],
+      "alpha": 120
+    },
+    {
+      "x": 60,
+      "y": 28,
+      "width": 12,
+      "height": 3,
+      "color": [255, 0, 255],
+      "alpha": 255
+    },
+    {
+      "x": 59,
+      "y": 30,
+      "width": 12,
+      "height": 3,
+      "color": [0, 255, 255],
+      "alpha": 150
+    },
+    {
+      "x": 80,
+      "y": 50,
+      "width": 12,
+      "height": 3,
+      "color": [0, 255, 255],
+      "alpha": 150
+    }
+  ],
+  "trees": [
+    {
+      "x": 10,
+      "y": 50,
+      "width": 8,
+      "height": 35
+    },
+    {
+      "x": 55,
+      "y": 60,
+      "width": 6,
+      "height": 40
+    },
+    {
+      "x": 88,
+      "y": 45,
+      "width": 7,
+      "height": 30
+    }
+  ],
+  "clouds": [
+    {
+      "x": 25,
+      "y": 85,
+      "width": 15,
+      "height": 20,
+      "alpha": 150
+    },
+    {
+      "x": 70,
+      "y": 90,
+      "width": 12,
+      "height": 20,
+      "alpha": 180
+    },
+    {
+      "x": 15,
+      "y": 65,
+      "width": 10,
+      "height": 20,
+      "alpha": 120
+    },
+    {
+      "x": 5,
+      "y": 75,
+      "width": 10,
+      "height": 20,
+      "alpha": 120
+    }
+  ],
+  "white_items": [
+    {
+      "x": 20,
+      "y": 42
+    },
+    {
+      "x": 35,
+      "y": 62
+    },
+    {
+      "x": 50,
+      "y": 49
+    },
+    {
+      "x": 65,
+      "y": 76
+    },
+    {
+      "x": 23,
+      "y": 21
+    }
+  ],
+  "black_items": [
+    {
+      "x": 40,
+      "y": 21
+    },
+    {
+      "x": 55,
+      "y": 28
+    },
+    {
+      "x": 70,
+      "y": 42
+    },
+    {
+      "x": 85,
+      "y": 35
+    },
+    {
+      "x": 95,
+      "y": 70
+    }
+  ],
+  "triangles": [
+      {
+          "x": 35,
+          "y": 30,
+          "size": 4,
+          "color": [255, 0, 0]
+      },
+      {
+          "x": 75,
+          "y": 30,
+          "size": 5,
+          "color": [255, 100, 0]
+      }
+  ],
+  "rainbow": {
+    "x": 10,
+    "y": 24,
+    "width": 15,
+    "height": 15
+  }
+}

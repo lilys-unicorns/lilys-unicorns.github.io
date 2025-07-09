@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lily Unicorns</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: monospace;
+        }
+        
+        #gameContainer {
+            background: #222;
+            border: 2px solid #444;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        #gameCanvas {
+            border: 1px solid #666;
+            background: #87CEEB;
+            display: block;
+        }
+        
+        #controls {
+            color: #fff;
+            margin-top: 10px;
+            text-align: center;
+            font-size: 12px;
+        }
+        
+        .control-section {
+            display: inline-block;
+            margin: 0 20px;
+        }
+        
+        .player1 { color: #ff6b6b; }
+        .player2 { color: #4ecdc4; }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="1280" height="720"></canvas>
+        <div id="controls">
+            <div class="control-section">
+                <div class="player1">Player 1: Arrow Keys to move, Up to jump/climb</div>
+            </div>
+            <div class="control-section">
+                <div class="player2">Player 2: WASD to move, W to jump/climb</div>
+            </div>
+            <div class="control-section">
+                <div>R: Reset | N: Next Level | ESC: Menu | F5: Reload Level JSON</div>
+            </div>
+            <div class="control-section" style="margin-top: 15px;">
+                <a href="level-editor.html" style="color: #4ecdc4; text-decoration: none; margin: 0 15px;">🛠️ Level Editor</a>
+                <a href="credits.html" style="color: #ff6b6b; text-decoration: none; margin: 0 15px;">📜 Credits</a>
+            </div>
+        </div>
+    </div>
+    <script src="levels-data.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

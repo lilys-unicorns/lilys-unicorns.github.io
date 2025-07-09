@@ -75,17 +75,22 @@ clouds:
   - x: 25  # Percentage of screen width
     y: 85  # Percentage of screen height from bottom
     width: 15  # Percentage of screen width
-    height: 8   # Percentage of screen height
+    height: 20   # Percentage of screen height
     alpha: 150  # Transparency (optional, defaults to 180)
   - x: 70
     y: 90
     width: 12
-    height: 6
+    height: 20
     alpha: 180
+  - x: 15
+    y: 65
+    width: 10
+    height: 20
+    alpha: 120
   - x: 5
     y: 75
     width: 10
-    height: 5
+    height: 20
     alpha: 120
 
 white_items:
@@ -114,6 +119,6 @@ black_items:
 
 rainbow:
   x: 15  # Percentage from right edge of screen
-  y: 20  # Percentage from bottom of screen
-  width: 10  # Percentage of screen width
-  height: 20  # Percentage of screen height
+  y: 30  # Percentage from bottom of screen
+  width: 105 # Percentage of screen width
+  height: 25  # Percentage of screen height
