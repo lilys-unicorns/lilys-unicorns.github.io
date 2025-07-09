@@ -352,7 +352,7 @@
                 this.levelData = {
                     level: { name: "New Level" },
                     background: { image: null },
-                    unicorns: { unicorn1: { x: 15, y: null }, unicorn2: { x: 45, y: null } },
+                    unicorns: { unicorn1: { x: 15, y: 50 }, unicorn2: { x: 45, y: 50 } },
                     platforms: [],
                     trees: [],
                     clouds: [],
@@ -504,8 +504,10 @@
                     }
                 } else if (this.currentTool === 'unicorn') {
                     // Toggle between unicorn1 and unicorn2
-                    const unicorn1Pos = this.percentToScreen(this.levelData.unicorns.unicorn1.x, 50);
-                    const unicorn2Pos = this.percentToScreen(this.levelData.unicorns.unicorn2.x, 50);
+                    const unicorn1Y = this.levelData.unicorns.unicorn1.y || 50;
+                    const unicorn2Y = this.levelData.unicorns.unicorn2.y || 50;
+                    const unicorn1Pos = this.percentToScreen(this.levelData.unicorns.unicorn1.x, unicorn1Y);
+                    const unicorn2Pos = this.percentToScreen(this.levelData.unicorns.unicorn2.x, unicorn2Y);
                     
                     const dist1 = Math.sqrt(Math.pow(pos.x - unicorn1Pos.x, 2) + Math.pow(pos.y - unicorn1Pos.y, 2));
                     const dist2 = Math.sqrt(Math.pow(pos.x - unicorn2Pos.x, 2) + Math.pow(pos.y - unicorn2Pos.y, 2));
@@ -656,8 +658,10 @@
             
             findElementAt(x, y) {
                 // Check unicorns first
-                const unicorn1Pos = this.percentToScreen(this.levelData.unicorns.unicorn1.x, 50);
-                const unicorn2Pos = this.percentToScreen(this.levelData.unicorns.unicorn2.x, 50);
+                const unicorn1Y = this.levelData.unicorns.unicorn1.y || 50;
+                const unicorn2Y = this.levelData.unicorns.unicorn2.y || 50;
+                const unicorn1Pos = this.percentToScreen(this.levelData.unicorns.unicorn1.x, unicorn1Y);
+                const unicorn2Pos = this.percentToScreen(this.levelData.unicorns.unicorn2.x, unicorn2Y);
                 
                 if (this.isPointInRect(x, y, unicorn1Pos.x - 16, unicorn1Pos.y - 16, 32, 32)) {
                     return { type: 'unicorn', data: this.levelData.unicorns.unicorn1, key: 'unicorn1' };
@@ -774,7 +778,8 @@
             
             getElementPosition(element) {
                 if (element.type === 'unicorn') {
-                    const pos = this.percentToScreen(element.data.x, 50);
+                    const y = element.data.y || 50;
+                    const pos = this.percentToScreen(element.data.x, y);
                     return { x: pos.x, y: pos.y };
                 } else {
                     const pos = this.percentToScreen(element.data.x, element.data.y);
@@ -828,8 +833,8 @@
                 this.ctx.strokeStyle = '#8B4513';
                 this.ctx.lineWidth = 3;
                 this.ctx.beginPath();
-                this.ctx.moveTo(0, this.height - 100);
-                this.ctx.lineTo(this.width, this.height - 100);
+                this.ctx.moveTo(0, this.height - 10);
+                this.ctx.lineTo(this.width, this.height - 10);
                 this.ctx.stroke();
                 
                 // Draw grid for better proportion understanding
@@ -1012,8 +1017,10 @@
                 }
                 
                 // Draw unicorns
-                const unicorn1Pos = this.percentToScreen(this.levelData.unicorns.unicorn1.x, 50);
-                const unicorn2Pos = this.percentToScreen(this.levelData.unicorns.unicorn2.x, 50);
+                const unicorn1Y = this.levelData.unicorns.unicorn1.y || 50;
+                const unicorn2Y = this.levelData.unicorns.unicorn2.y || 50;
+                const unicorn1Pos = this.percentToScreen(this.levelData.unicorns.unicorn1.x, unicorn1Y);
+                const unicorn2Pos = this.percentToScreen(this.levelData.unicorns.unicorn2.x, unicorn2Y);
                 
                 // Unicorn 1 (white)
                 this.ctx.fillStyle = '#fff';
@@ -1044,7 +1051,8 @@
                     this.ctx.setLineDash([5, 5]);
                     
                     if (this.selectedElement.type === 'unicorn') {
-                        const pos = this.percentToScreen(this.selectedElement.data.x, 50);
+                        const y = this.selectedElement.data.y || 50;
+                        const pos = this.percentToScreen(this.selectedElement.data.x, y);
                         this.ctx.strokeRect(pos.x - 18, pos.y - 18, 36, 36);
                     } else if (this.selectedElement.type === 'platform') {
                         const pos = this.percentToScreen(this.selectedElement.data.x, this.selectedElement.data.y);
@@ -1217,7 +1225,7 @@
                 // Ensure all required properties exist for backward compatibility
                 if (!this.levelData.level) this.levelData.level = { name: "Loaded Level" };
                 if (!this.levelData.background) this.levelData.background = { image: null };
-                if (!this.levelData.unicorns) this.levelData.unicorns = { unicorn1: { x: 15, y: null }, unicorn2: { x: 45, y: null } };
+                if (!this.levelData.unicorns) this.levelData.unicorns = { unicorn1: { x: 15, y: 50 }, unicorn2: { x: 45, y: 50 } };
                 if (!this.levelData.platforms) this.levelData.platforms = [];
                 if (!this.levelData.trees) this.levelData.trees = [];
                 if (!this.levelData.clouds) this.levelData.clouds = [];
@@ -1301,7 +1309,7 @@
                     this.levelData = {
                         level: { name: "New Level" },
                         background: { image: null },
-                        unicorns: { unicorn1: { x: 15, y: null }, unicorn2: { x: 45, y: null } },
+                        unicorns: { unicorn1: { x: 15, y: 50 }, unicorn2: { x: 45, y: 50 } },
                         platforms: [],
                         trees: [],
                         clouds: [],

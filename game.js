@@ -707,8 +707,8 @@ class Game {
         this.ctx.strokeStyle = '#8B4513';
         this.ctx.lineWidth = 3;
         this.ctx.beginPath();
-        this.ctx.moveTo(0, this.height - 100);
-        this.ctx.lineTo(this.width, this.height - 100);
+        this.ctx.moveTo(0, this.height - 10);
+        this.ctx.lineTo(this.width, this.height - 10);
         this.ctx.stroke();
         
         // Score display
@@ -811,7 +811,7 @@ class Unicorn {
         this.framesPerRow = 5;
         this.totalFrames = 15;
         
-        this.groundLevel = 620 - this.height; // Unicorn's Y position when bottom touches ground
+        this.groundLevel = (720 - 10) - this.height; // Unicorn's Y position when bottom touches ground
     }
     
     update(keys, platforms, trees) {
@@ -1259,8 +1259,8 @@ class GlitterParticle {
         this.alpha = (this.life / 60) * 255;
         
         // Bounce off ground
-        if (this.y > 620 - this.size) {
-            this.y = 620 - this.size;
+        if (this.y > (720 - 10) - this.size) {
+            this.y = (720 - 10) - this.size;
             this.velocityY *= -0.5;
         }
     }
