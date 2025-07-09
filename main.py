@@ -313,13 +313,23 @@ class Tree(pygame.sprite.Sprite):
                          crown_radius // 2)
         
         # Top small circle for tree top
+        top_circle_y = foliage_center_y - crown_radius // 2
         pygame.draw.circle(self.image, crown_color, 
-                         (foliage_center_x, foliage_center_y - crown_radius // 2), 
+                         (foliage_center_x, top_circle_y), 
                          crown_radius // 3)
         
-        # Top collision area (only the top 10% of the tree for standing)
-        self.top_collision_height = int(height * 0.1)
-        self.top_collision_rect = pygame.Rect(x, y, width, self.top_collision_height)
+        # Calculate the actual visual top of the tree
+        # The highest point is the top of the top circle minus its radius
+        visual_tree_top_y = top_circle_y - crown_radius // 3
+        
+        # Top collision area (positioned at the actual visual tree top)
+        self.top_collision_height = int(height * 0.15)  # Small collision area at the very top
+        # Position collision rect at the visual tree top
+        collision_rect_y = y + visual_tree_top_y
+        self.top_collision_rect = pygame.Rect(x, collision_rect_y, width, self.top_collision_height)
+        
+        # Store the actual tree top position for collision detection
+        self.visual_tree_top = y + visual_tree_top_y
 
 
 class Item(pygame.sprite.Sprite):
@@ -534,7 +544,8 @@ class Unicorn(pygame.sprite.Sprite):
                 # Only check collision with the top part of the tree
                 if self.rect.colliderect(tree.top_collision_rect) and self.vel_y > 0:
                     # Landing on top of tree (falling down)
-                    self.rect.bottom = tree.top_collision_rect.top
+                    # Place unicorn directly on the visual tree top
+                    self.rect.bottom = tree.visual_tree_top
                     self.vel_y = 0
                     self.on_ground = True
 
