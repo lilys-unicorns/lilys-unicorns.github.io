@@ -7,83 +7,83 @@ background:
 
 unicorns:
   unicorn1:
-    x: 50
+    x: 4  # Percentage of screen width
     y: null
   unicorn2:
-    x: 50
+    x: 4  # Percentage of screen width
     y: null
 
 platforms:
   # Create a maze-like structure
-  - x: 200
-    y: 150
-    width: 300
-    height: 20
+  - x: 15  # Percentage of screen width
+    y: 21  # Percentage of screen height from bottom
+    width: 23  # Percentage of screen width
+    height: 3  # Percentage of screen height
     color: [255, 127, 0]  # Orange
     alpha: 255  # Fully opaque
-  - x: 600
-    y: 200
-    width: 20
-    height: 200
+  - x: 47
+    y: 28
+    width: 2
+    height: 28
     color: [255, 127, 0]  # Orange wall
     alpha: 180  # Semi-transparent
-  - x: 300
-    y: 300
-    width: 200
-    height: 20
+  - x: 23
+    y: 42
+    width: 16
+    height: 3
     color: [255, 127, 0]  # Orange
     alpha: 255  # Fully opaque
-  - x: 700
-    y: 350
-    width: 300
-    height: 20
+  - x: 55
+    y: 49
+    width: 23
+    height: 3
     color: [255, 127, 0]  # Orange
     alpha: 200  # Semi-transparent
-  - x: 900
-    y: 450
-    width: 20
-    height: 200
+  - x: 70
+    y: 62
+    width: 2
+    height: 28
     color: [255, 127, 0]  # Orange wall
     alpha: 150  # More transparent
-  - x: 1100
-    y: 250
-    width: 200
-    height: 20
+  - x: 86
+    y: 35
+    width: 16
+    height: 3
     color: [255, 127, 0]  # Orange
     alpha: 255  # Fully opaque
-  - x: 1200
-    y: 400
-    width: 150
-    height: 20
+  - x: 94
+    y: 56
+    width: 12
+    height: 3
     color: [255, 127, 0]  # Orange
     alpha: 170  # Semi-transparent
 
 white_items:
-  - x: 250
-    y: 200
-  - x: 350
-    y: 350
-  - x: 750
-    y: 400
-  - x: 1150
-    y: 300
-  - x: 1250
-    y: 450
+  - x: 20  # Percentage of screen width
+    y: 28  # Percentage of screen height from bottom
+  - x: 27
+    y: 49
+  - x: 59
+    y: 56
+  - x: 90
+    y: 42
+  - x: 98
+    y: 62
 
 black_items:
-  - x: 400
-    y: 200
-  - x: 450
-    y: 350
-  - x: 850
-    y: 400
-  - x: 1200
-    y: 300
-  - x: 1300
-    y: 450
+  - x: 31
+    y: 28
+  - x: 35
+    y: 49
+  - x: 66
+    y: 56
+  - x: 94
+    y: 42
+  - x: 102
+    y: 62
 
 rainbow:
-  x: 200  # From right edge of screen
-  y: 550  # From bottom of screen
-  width: 180
-  height: 180
+  x: 16  # Percentage from right edge of screen
+  y: 76  # Percentage from bottom of screen
+  width: 14  # Percentage of screen width
+  height: 25  # Percentage of screen height

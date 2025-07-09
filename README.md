@@ -4,7 +4,7 @@ A magical two-player platformer game where unicorns collect items and work toget
 
 ## Game Overview
 
-Lily Unicorns is a cooperative 2D platformer featuring two unicorns with different abilities. Players must navigate through colorful levels, collect items, climb platforms, and ultimately meet at the rainbow to complete each level with a spectacular glitter celebration.
+Lily Unicorns is a cooperative 2D platformer featuring two unicorns with different abilities. Players must navigate through colorful levels, collect items, climb platforms, and ultimately meet at the rainbow to complete each level with a spectacular glitter celebration. The game runs in a 1280x720 window with a 16:9 aspect ratio and uses percentage-based positioning for scalable level design.
 
 ## Features
 
@@ -34,6 +34,7 @@ Lily Unicorns is a cooperative 2D platformer featuring two unicorns with differe
    pip install -r requirements.txt
    ```
 3. Ensure you have the `kaitlyn_unicorn.png` sprite file in the `assets/sprites/` directory
+4. Run the game with `python main.py` - it will open in a 1280x720 window
 
 ## How to Play
 
@@ -97,49 +98,58 @@ background:
 
 unicorns:
   unicorn1:
-    x: 200      # Starting X position
+    x: 15       # Starting X position (percentage of screen width)
     y: null     # Starting Y position (null = screen center)
   unicorn2:
-    x: 600
+    x: 45       # Starting X position (percentage of screen width)
     y: null
 
 platforms:
-  - x: 200              # X position from left
-    y: 250              # Y position from bottom of screen
-    width: 150          # Platform width
-    height: 20          # Platform height
+  - x: 15               # X position from left (percentage of screen width)
+    y: 35               # Y position from bottom of screen (percentage of screen height)
+    width: 12           # Platform width (percentage of screen width)
+    height: 3           # Platform height (percentage of screen height)
     color: [255, 0, 0]  # RGB color [Red, Green, Blue]
     alpha: 255          # Transparency (0=invisible, 255=opaque) - optional, defaults to 255
-  - x: 400
-    y: 300
-    width: 100
-    height: 20
+  - x: 30
+    y: 42
+    width: 8
+    height: 3
     color: [0, 255, 0]  # Green
     alpha: 128          # Semi-transparent platform
   # Add more platforms...
 
 white_items:
-  - x: 250    # X position from left
-    y: 300    # Y position from bottom of screen
+  - x: 20     # X position from left (percentage of screen width)
+    y: 42     # Y position from bottom of screen (percentage of screen height)
   # Add more white items...
 
 black_items:
-  - x: 500    # X position from left
-    y: 200    # Y position from bottom of screen
+  - x: 40     # X position from left (percentage of screen width)
+    y: 28     # Y position from bottom of screen (percentage of screen height)
   # Add more black items...
 
 rainbow:
-  x: 300      # X position from RIGHT edge of screen
-  y: 300      # Y position from bottom of screen
-  width: 200  # Rainbow width
-  height: 200 # Rainbow height
+  x: 25       # X position from RIGHT edge of screen (percentage of screen width)
+  y: 42       # Y position from bottom of screen (percentage of screen height)
+  width: 15   # Rainbow width (percentage of screen width)
+  height: 28  # Rainbow height (percentage of screen height)
 ```
 
 ### Position System
 
-- **Y coordinates**: Measured from the bottom of the screen (0 = bottom, higher values = higher up)
-- **Rainbow X coordinate**: Measured from the RIGHT edge of the screen
-- **All other X coordinates**: Measured from the left edge of the screen
+**All coordinates are now percentage-based (0-100) for better scalability across different screen sizes.**
+
+- **X coordinates**: Percentage of screen width from the left edge (0% = left edge, 100% = right edge)
+- **Y coordinates**: Percentage of screen height from the bottom of the screen (0% = bottom, 100% = top)
+- **Rainbow X coordinate**: Percentage of screen width from the RIGHT edge of the screen
+- **Width and Height**: Percentage of screen dimensions (width as % of screen width, height as % of screen height)
+
+#### Benefits of Percentage-Based Positioning:
+- **Scalable**: Works perfectly across different screen sizes and resolutions
+- **Consistent**: Maintains proportions regardless of window size
+- **Easy to design**: Think in terms of screen portions rather than absolute pixels
+- **Future-proof**: Adapts automatically to any screen resolution
 
 ### New Features
 

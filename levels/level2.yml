@@ -7,93 +7,93 @@ background:
 
 unicorns:
   unicorn1:
-    x: 100
+    x: 8  # Percentage of screen width
     y: null
   unicorn2:
-    x: 1400
+    x: 92  # Percentage of screen width
     y: null
 
 platforms:
   # Left tower
-  - x: 50
-    y: 150
-    width: 100
-    height: 20
+  - x: 4  # Percentage of screen width
+    y: 21  # Percentage of screen height from bottom
+    width: 8  # Percentage of screen width
+    height: 3  # Percentage of screen height
     color: [255, 100, 100]  # Light Red
     alpha: 255  # Fully opaque
-  - x: 50
-    y: 250
-    width: 100
-    height: 20
+  - x: 4
+    y: 35
+    width: 8
+    height: 3
     color: [255, 150, 150]  # Lighter Red
     alpha: 200  # Semi-transparent
-  - x: 50
-    y: 350
-    width: 100
-    height: 20
+  - x: 4
+    y: 49
+    width: 8
+    height: 3
     color: [255, 200, 200]  # Very Light Red
     alpha: 160  # More transparent
   
   # Center platforms
-  - x: 400
-    y: 300
-    width: 200
-    height: 20
+  - x: 30
+    y: 42
+    width: 15
+    height: 3
     color: [100, 255, 100]  # Light Green
     alpha: 255  # Fully opaque
-  - x: 700
-    y: 450
-    width: 200
-    height: 20
+  - x: 55
+    y: 62
+    width: 15
+    height: 3
     color: [150, 255, 150]  # Lighter Green
     alpha: 180  # Semi-transparent
   
   # Right tower
-  - x: 1350
-    y: 150
-    width: 100
-    height: 20
+  - x: 88
+    y: 21
+    width: 8
+    height: 3
     color: [100, 100, 255]  # Light Blue
     alpha: 255  # Fully opaque
-  - x: 1350
-    y: 250
-    width: 100
-    height: 20
+  - x: 88
+    y: 35
+    width: 8
+    height: 3
     color: [150, 150, 255]  # Lighter Blue
     alpha: 200  # Semi-transparent
-  - x: 1350
-    y: 350
-    width: 100
-    height: 20
+  - x: 88
+    y: 49
+    width: 8
+    height: 3
     color: [200, 200, 255]  # Very Light Blue
     alpha: 160  # More transparent
 
 white_items:
-  - x: 75
-    y: 200
-  - x: 75
-    y: 300
-  - x: 450
-    y: 350
-  - x: 750
-    y: 500
-  - x: 600
-    y: 150
+  - x: 6  # Percentage of screen width
+    y: 28  # Percentage of screen height from bottom
+  - x: 6
+    y: 42
+  - x: 35
+    y: 49
+  - x: 60
+    y: 70
+  - x: 47
+    y: 21
 
 black_items:
-  - x: 1375
-    y: 200
-  - x: 1375
-    y: 300
-  - x: 500
-    y: 350
-  - x: 800
-    y: 500
-  - x: 900
-    y: 150
+  - x: 90
+    y: 28
+  - x: 90
+    y: 42
+  - x: 40
+    y: 49
+  - x: 65
+    y: 70
+  - x: 70
+    y: 21
 
 rainbow:
-  x: 250  # From right edge of screen  
-  y: 300  # From bottom of screen
-  width: 150
-  height: 150
+  x: 20  # Percentage from right edge of screen  
+  y: 42  # Percentage from bottom of screen
+  width: 12  # Percentage of screen width
+  height: 21  # Percentage of screen height

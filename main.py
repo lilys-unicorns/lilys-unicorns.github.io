@@ -77,6 +77,15 @@ def load_background_image(image_path):
     return False
 
 
+def percentage_to_pixels(percentage_value, screen_dimension):
+    """Convert percentage value to pixel coordinates"""
+    if isinstance(percentage_value, (int, float)) and 0 <= percentage_value <= 100:
+        return int((percentage_value / 100.0) * screen_dimension)
+    else:
+        # If it's not a percentage, assume it's already pixels (backwards compatibility)
+        return int(percentage_value)
+
+
 def create_level_objects(level_data, screen_width, screen_height):
     """Create game objects from level data"""
     objects = {
@@ -98,12 +107,18 @@ def create_level_objects(level_data, screen_width, screen_height):
     if "platforms" in level_data:
         for platform_data in level_data["platforms"]:
             alpha = platform_data.get("alpha", 255)  # Default to fully opaque
+            
+            # Convert percentage-based positioning to pixels
+            x_pos = percentage_to_pixels(platform_data["x"], screen_width)
+            y_pos = percentage_to_pixels(platform_data["y"], screen_height)
+            width = percentage_to_pixels(platform_data["width"], screen_width)
+            height = percentage_to_pixels(platform_data["height"], screen_height)
+            
             platform = Platform(
-                platform_data["x"],
-                screen_height
-                - platform_data["y"],  # Convert from bottom-relative to top-relative
-                platform_data["width"],
-                platform_data["height"],
+                x_pos,
+                screen_height - y_pos,  # Convert from bottom-relative to top-relative
+                width,
+                height,
                 tuple(platform_data["color"]),
                 alpha,
             )
@@ -112,10 +127,12 @@ def create_level_objects(level_data, screen_width, screen_height):
     # Create white items
     if "white_items" in level_data:
         for item_data in level_data["white_items"]:
+            x_pos = percentage_to_pixels(item_data["x"], screen_width)
+            y_pos = percentage_to_pixels(item_data["y"], screen_height)
+            
             item = Item(
-                item_data["x"],
-                screen_height
-                - item_data["y"],  # Convert from bottom-relative to top-relative
+                x_pos,
+                screen_height - y_pos,  # Convert from bottom-relative to top-relative
                 (255, 255, 255),
             )
             objects["white_items"].add(item)
@@ -123,10 +140,12 @@ def create_level_objects(level_data, screen_width, screen_height):
     # Create black items
     if "black_items" in level_data:
         for item_data in level_data["black_items"]:
+            x_pos = percentage_to_pixels(item_data["x"], screen_width)
+            y_pos = percentage_to_pixels(item_data["y"], screen_height)
+            
             item = Item(
-                item_data["x"],
-                screen_height
-                - item_data["y"],  # Convert from bottom-relative to top-relative
+                x_pos,
+                screen_height - y_pos,  # Convert from bottom-relative to top-relative
                 (0, 0, 0),
             )
             objects["black_items"].add(item)
@@ -134,13 +153,18 @@ def create_level_objects(level_data, screen_width, screen_height):
     # Create rainbow
     if "rainbow" in level_data:
         rainbow_data = level_data["rainbow"]
+        
+        # Convert percentage-based positioning to pixels
+        x_pos = percentage_to_pixels(rainbow_data["x"], screen_width)
+        y_pos = percentage_to_pixels(rainbow_data["y"], screen_height)
+        width = percentage_to_pixels(rainbow_data["width"], screen_width)
+        height = percentage_to_pixels(rainbow_data["height"], screen_height)
+        
         objects["rainbow"] = Rainbow(
-            screen_width
-            - rainbow_data["x"],  # Convert from right-relative to left-relative
-            screen_height
-            - rainbow_data["y"],  # Convert from bottom-relative to top-relative
-            rainbow_data["width"],
-            rainbow_data["height"],
+            screen_width - x_pos,  # Convert from right-relative to left-relative
+            screen_height - y_pos,  # Convert from bottom-relative to top-relative
+            width,
+            height,
         )
 
     # Get unicorn starting positions
@@ -148,30 +172,33 @@ def create_level_objects(level_data, screen_width, screen_height):
         unicorns_data = level_data["unicorns"]
         if "unicorn1" in unicorns_data:
             u1_data = unicorns_data["unicorn1"]
-            objects["unicorn1_start"] = (
-                u1_data["x"],
-                (
-                    screen_height // 2
-                    if u1_data["y"] is None
-                    else screen_height - u1_data["y"]
-                ),
+            x_pos = percentage_to_pixels(u1_data["x"], screen_width)
+            y_pos = (
+                screen_height // 2
+                if u1_data["y"] is None
+                else screen_height - percentage_to_pixels(u1_data["y"], screen_height)
             )
+            objects["unicorn1_start"] = (x_pos, y_pos)
+            
         if "unicorn2" in unicorns_data:
             u2_data = unicorns_data["unicorn2"]
-            objects["unicorn2_start"] = (
-                u2_data["x"],
-                (
-                    screen_height // 2
-                    if u2_data["y"] is None
-                    else screen_height - u2_data["y"]
-                ),
+            x_pos = percentage_to_pixels(u2_data["x"], screen_width)
+            y_pos = (
+                screen_height // 2
+                if u2_data["y"] is None
+                else screen_height - percentage_to_pixels(u2_data["y"], screen_height)
             )
+            objects["unicorn2_start"] = (x_pos, y_pos)
 
     return objects
 
 
-screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-screen_width, screen_height = screen.get_size()
+# Set window size with 16:9 aspect ratio
+WINDOW_WIDTH = 1280
+WINDOW_HEIGHT = 720  # 1280/720 = 16:9 ratio
+
+screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+screen_width, screen_height = WINDOW_WIDTH, WINDOW_HEIGHT
 pygame.display.set_caption("Lily Unicorns")
 
 clock = pygame.time.Clock()
