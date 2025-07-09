@@ -77,6 +77,13 @@ def load_background_image(image_path):
     return False
 
 
+def draw_ground(screen):
+    """Draw the ground at the bottom of the screen"""
+    ground_height_pixels = percentage_to_pixels(GROUND_HEIGHT_PERCENT, screen_height)
+    ground_rect = pygame.Rect(0, screen_height - ground_height_pixels, screen_width, ground_height_pixels)
+    pygame.draw.rect(screen, GROUND_COLOR, ground_rect)
+
+
 def percentage_to_pixels(percentage_value, screen_dimension):
     """Convert percentage value to pixel coordinates"""
     if isinstance(percentage_value, (int, float)) and 0 <= percentage_value <= 100:
@@ -196,6 +203,10 @@ def create_level_objects(level_data, screen_width, screen_height):
 # Set window size with 16:9 aspect ratio
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720  # 1280/720 = 16:9 ratio
+
+# Ground configuration
+GROUND_HEIGHT_PERCENT = 14  # Height of ground as percentage of screen height
+GROUND_COLOR = (139, 69, 19)  # Brown color (RGB)
 
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 screen_width, screen_height = WINDOW_WIDTH, WINDOW_HEIGHT
@@ -354,7 +365,7 @@ class Unicorn(pygame.sprite.Sprite):
         self.gravity = 0.5
         self.jump_strength = -12
         self.on_ground = False
-        self.ground_y = screen_height - 100
+        self.ground_y = screen_height - percentage_to_pixels(GROUND_HEIGHT_PERCENT, screen_height)
         self.can_climb = False
 
         # Score
@@ -659,6 +670,9 @@ while running:
         screen.blit(background_image, (0, 0))
     else:
         screen.fill((50, 150, 50))
+    
+    # Draw ground
+    draw_ground(screen)
     
     all_sprites.draw(screen)
 
