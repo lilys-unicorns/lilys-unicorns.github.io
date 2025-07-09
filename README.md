@@ -13,6 +13,7 @@ Lily Unicorns is a cooperative 2D platformer featuring two unicorns with differe
 - **Physics-Based Movement**: Gravity, jumping, and climbing mechanics
 - **Colorful Platforms**: Climbable platforms with distinct colors and transparency support
 - **Interactive Trees**: Decorative trees that unicorns can stand on top of but pass through
+- **Decorative Clouds**: Fluffy clouds that add atmosphere with no collision
 - **Item Collection**: White items for Player 1, black items for Player 2
 - **Rainbow Completion**: Level ends when both unicorns reach the rainbow
 - **Glitter Effects**: Beautiful particle effects on level completion
@@ -131,6 +132,19 @@ trees:
     height: 40
   # Add more trees...
 
+clouds:
+  - x: 25               # X position from left (percentage of screen width)
+    y: 85               # Y position from bottom of screen (percentage of screen height)
+    width: 15           # Cloud width (percentage of screen width)
+    height: 8           # Cloud height (percentage of screen height)
+    alpha: 150          # Transparency (0=invisible, 255=opaque) - optional, defaults to 180
+  - x: 70
+    y: 90
+    width: 12
+    height: 6
+    alpha: 180
+  # Add more clouds...
+
 white_items:
   - x: 20     # X position from left (percentage of screen width)
     y: 42     # Y position from bottom of screen (percentage of screen height)
@@ -183,6 +197,13 @@ rainbow:
 - Unicorns can **stand on top** of trees (top collision only)
 - Trees are drawn with brown trunks and green foliage
 - Use trees to create forest-like environments and additional platforms
+
+#### Decorative Clouds
+- Clouds are purely decorative elements with **no collision detection**
+- Unicorns pass through clouds completely (like background elements)
+- Clouds are drawn as fluffy, semi-transparent white shapes
+- Each cloud uses overlapping circles for a natural, puffy appearance
+- Use clouds to add atmosphere and depth to sky areas
 
 #### Automatic Level Detection
 - The game automatically detects all level files in the `levels/` directory

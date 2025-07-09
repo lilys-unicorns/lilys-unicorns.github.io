@@ -71,6 +71,23 @@ trees:
     width: 7
     height: 30
 
+clouds:
+  - x: 25  # Percentage of screen width
+    y: 85  # Percentage of screen height from bottom
+    width: 15  # Percentage of screen width
+    height: 8   # Percentage of screen height
+    alpha: 150  # Transparency (optional, defaults to 180)
+  - x: 70
+    y: 90
+    width: 12
+    height: 6
+    alpha: 180
+  - x: 5
+    y: 75
+    width: 10
+    height: 5
+    alpha: 120
+
 white_items:
   - x: 20  # Percentage of screen width
     y: 42  # Percentage of screen height from bottom

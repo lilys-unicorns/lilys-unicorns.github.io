@@ -125,6 +125,7 @@ def create_level_objects(level_data, screen_width, screen_height):
     objects = {
         "platforms": pygame.sprite.Group(),
         "trees": pygame.sprite.Group(),
+        "clouds": pygame.sprite.Group(),
         "white_items": pygame.sprite.Group(),
         "black_items": pygame.sprite.Group(),
         "rainbow": None,
@@ -175,6 +176,27 @@ def create_level_objects(level_data, screen_width, screen_height):
                 height,
             )
             objects["trees"].add(tree)
+
+    # Create clouds
+    if "clouds" in level_data:
+        for cloud_data in level_data["clouds"]:
+            # Convert percentage-based positioning to pixels
+            x_pos = percentage_to_pixels(cloud_data["x"], screen_width)
+            y_pos = percentage_to_pixels(cloud_data["y"], screen_height)
+            width = percentage_to_pixels(cloud_data["width"], screen_width)
+            height = percentage_to_pixels(cloud_data["height"], screen_height)
+            
+            # Get optional alpha value
+            alpha = cloud_data.get("alpha", 180)  # Default to semi-transparent
+            
+            cloud = Cloud(
+                x_pos,
+                screen_height - y_pos,  # Convert from bottom-relative to top-relative
+                width,
+                height,
+                alpha,
+            )
+            objects["clouds"].add(cloud)
 
     # Create white items
     if "white_items" in level_data:
@@ -330,6 +352,119 @@ class Tree(pygame.sprite.Sprite):
         
         # Store the actual tree top position for collision detection
         self.visual_tree_top = y + visual_tree_top_y
+
+
+class Cloud(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height, alpha=180):
+        super().__init__()
+        self.image = pygame.Surface((width, height), pygame.SRCALPHA)
+        self.rect = pygame.Rect(x, y, width, height)
+        
+        # Generate realistic cloud using noise-based approach
+        self.generate_realistic_cloud(width, height, alpha)
+    
+    def simple_noise(self, x, y, seed=1):
+        """Simple pseudo-noise function for cloud generation"""
+        # Create a pseudo-random value based on position and seed
+        n = int(x) * 374761393 + int(y) * 668265263 + seed * 1013904223
+        n = (n << 13) ^ n
+        return (1.0 - ((n * (n * n * 15731 + 789221) + 1376312589) & 0x7fffffff) / 1073741824.0)
+    
+    def fractal_noise(self, x, y, octaves=4, persistence=0.5, scale=0.01):
+        """Generate fractal noise by combining multiple octaves"""
+        value = 0.0
+        amplitude = 1.0
+        frequency = scale
+        max_value = 0.0
+        
+        for i in range(octaves):
+            value += self.simple_noise(x * frequency, y * frequency, i + 1) * amplitude
+            max_value += amplitude
+            amplitude *= persistence
+            frequency *= 2.0
+        
+        return value / max_value
+    
+    def generate_realistic_cloud(self, width, height, alpha):
+        """Generate a realistic cloud using noise-based techniques"""
+        # Create a pixel array for the cloud
+        cloud_data = []
+        
+        # Base cloud shape using noise
+        for py in range(height):
+            row = []
+            for px in range(width):
+                # Normalize coordinates to cloud center
+                nx = (px - width/2) / (width/2)
+                ny = (py - height/2) / (height/2)
+                
+                # Create elliptical falloff for cloud shape
+                distance = math.sqrt(nx*nx + ny*ny)
+                falloff = max(0, 1 - distance)
+                
+                # Generate noise value
+                noise_value = self.fractal_noise(px, py, octaves=3, persistence=0.6, scale=0.03)
+                
+                # Combine noise with falloff for cloud density
+                cloud_density = (noise_value * 0.5 + 0.5) * falloff
+                
+                # Create wispy edges
+                if cloud_density > 0.3:
+                    cloud_density = min(1.0, cloud_density * 1.5)
+                else:
+                    cloud_density *= 0.5
+                
+                row.append(cloud_density)
+            cloud_data.append(row)
+        
+        # Render the cloud to the surface
+        for py in range(height):
+            for px in range(width):
+                density = cloud_data[py][px]
+                if density > 0.1:  # Only draw pixels with sufficient density
+                    # Create varying shades of white/gray for depth
+                    color_intensity = int(255 * (0.85 + 0.15 * density))
+                    
+                    # Add slight color variations for realism
+                    base_color = min(255, color_intensity + random.randint(-10, 10))
+                    
+                    # Calculate alpha based on density
+                    pixel_alpha = int(alpha * density)
+                    
+                    if pixel_alpha > 0:
+                        color = (base_color, base_color, base_color, pixel_alpha)
+                        self.image.set_at((px, py), color)
+        
+        # Add some additional wispy details
+        self.add_wispy_details(width, height, alpha)
+    
+    def add_wispy_details(self, width, height, alpha):
+        """Add wispy details to make clouds more realistic"""
+        # Add some streaky details
+        for _ in range(width // 20):
+            # Random starting point
+            start_x = random.randint(0, width - 1)
+            start_y = random.randint(0, height - 1)
+            
+            # Create wispy streaks
+            streak_length = random.randint(width // 8, width // 4)
+            angle = random.uniform(0, 2 * math.pi)
+            
+            for i in range(streak_length):
+                x = int(start_x + i * math.cos(angle) * 0.5)
+                y = int(start_y + i * math.sin(angle) * 0.3)
+                
+                if 0 <= x < width and 0 <= y < height:
+                    # Get current pixel
+                    current_color = self.image.get_at((x, y))
+                    if current_color[3] > 0:  # If pixel has alpha
+                        # Add wispy effect
+                        intensity = max(0, 1 - i / streak_length)
+                        wispy_alpha = int(alpha * 0.3 * intensity)
+                        
+                        if wispy_alpha > 0:
+                            color = (250, 250, 250, wispy_alpha)
+                            self.image.set_at((x, y), color)
 
 
 class Item(pygame.sprite.Sprite):
@@ -644,7 +779,7 @@ def load_current_level():
 
 def reset_level():
     """Reset the current level"""
-    global level_complete, glitters, unicorn1, unicorn2, platforms, trees, white_items, black_items, rainbow, all_sprites
+    global level_complete, glitters, unicorn1, unicorn2, platforms, trees, clouds, white_items, black_items, rainbow, all_sprites
 
     level_complete = False
     glitters = []
@@ -673,6 +808,7 @@ def reset_level():
     # Get level objects
     platforms = level_objects["platforms"]
     trees = level_objects["trees"]
+    clouds = level_objects["clouds"]
     white_items = level_objects["white_items"]
     black_items = level_objects["black_items"]
     rainbow = level_objects["rainbow"]
@@ -683,6 +819,7 @@ def reset_level():
     all_sprites.add(unicorn2)
     all_sprites.add(platforms)
     all_sprites.add(trees)
+    all_sprites.add(clouds)
     all_sprites.add(white_items)
     all_sprites.add(black_items)
     if rainbow:
