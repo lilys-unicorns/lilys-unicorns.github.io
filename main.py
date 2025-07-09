@@ -281,11 +281,162 @@ pygame.display.set_caption("Lily Unicorns")
 
 clock = pygame.time.Clock()
 
-# Initialize font for score display
+# Initialize fonts for different uses
 font = pygame.font.Font(None, 36)
+title_font = pygame.font.Font(None, 96)  # Large pixelized font for title
+menu_font = pygame.font.Font(None, 48)   # Medium font for menu items
 
 # Global background image
 background_image = None
+
+# Game states
+MENU = 0
+PLAYING = 1
+game_state = MENU
+
+class MenuSystem:
+    def __init__(self):
+        self.selected_option = 0
+        self.menu_options = ["PLAY", "EXIT"]
+        self.title = "LILY'S UNICORNS"
+        
+        # Colors
+        self.bg_color = (50, 150, 50)  # Same as game background
+        self.title_color = (255, 100, 255)  # Bright magenta
+        self.selected_color = (255, 255, 100)  # Bright yellow
+        self.normal_color = (255, 255, 255)  # White
+        
+        # Animation for title
+        self.title_pulse_timer = 0
+        
+    def draw_pixelized_text(self, surface, text, font, color, x, y, center=False):
+        """Draw text with pixelized effect"""
+        # Create the text surface
+        text_surface = font.render(text, False, color)  # False = no antialiasing for pixelized look
+        
+        # Add pixelized border effect
+        border_color = (0, 0, 0)  # Black border
+        border_surface = font.render(text, False, border_color)
+        
+        # Get text rectangle
+        text_rect = text_surface.get_rect()
+        if center:
+            text_rect.center = (x, y)
+        else:
+            text_rect.x = x
+            text_rect.y = y
+        
+        # Draw border (slightly offset)
+        for dx in [-2, -1, 0, 1, 2]:
+            for dy in [-2, -1, 0, 1, 2]:
+                if dx != 0 or dy != 0:
+                    border_rect = text_rect.copy()
+                    border_rect.x += dx
+                    border_rect.y += dy
+                    surface.blit(border_surface, border_rect)
+        
+        # Draw main text
+        surface.blit(text_surface, text_rect)
+        
+        return text_rect
+    
+    def update(self):
+        """Update menu animations"""
+        self.title_pulse_timer += 0.1
+    
+    def handle_input(self, event):
+        """Handle menu input"""
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP:
+                self.selected_option = (self.selected_option - 1) % len(self.menu_options)
+            elif event.key == pygame.K_DOWN:
+                self.selected_option = (self.selected_option + 1) % len(self.menu_options)
+            elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                if self.selected_option == 0:  # PLAY
+                    return "PLAY"
+                elif self.selected_option == 1:  # EXIT
+                    return "EXIT"
+        return None
+    
+    def draw(self, surface):
+        """Draw the menu"""
+        # Clear screen
+        surface.fill(self.bg_color)
+        
+        # Draw background clouds for atmosphere
+        self.draw_background_clouds(surface)
+        
+        # Draw title with pulsing effect
+        title_scale = 1.0 + 0.1 * math.sin(self.title_pulse_timer)
+        title_color = (
+            int(255 * (0.8 + 0.2 * math.sin(self.title_pulse_timer * 0.7))),
+            int(100 * (0.8 + 0.2 * math.sin(self.title_pulse_timer * 0.5))),
+            int(255 * (0.8 + 0.2 * math.sin(self.title_pulse_timer * 0.3)))
+        )
+        
+        # Scale title font
+        scaled_font = pygame.font.Font(None, int(96 * title_scale))
+        
+        self.draw_pixelized_text(
+            surface, 
+            self.title, 
+            scaled_font, 
+            title_color,
+            screen_width // 2, 
+            screen_height // 3,
+            center=True
+        )
+        
+        # Draw menu options
+        menu_y_start = screen_height // 2 + 50
+        for i, option in enumerate(self.menu_options):
+            color = self.selected_color if i == self.selected_option else self.normal_color
+            
+            # Add selection indicator
+            if i == self.selected_option:
+                indicator = ">> " + option + " <<"
+            else:
+                indicator = option
+            
+            self.draw_pixelized_text(
+                surface,
+                indicator,
+                menu_font,
+                color,
+                screen_width // 2,
+                menu_y_start + i * 80,
+                center=True
+            )
+        
+        # Draw instructions
+        instruction_text = "USE ARROW KEYS TO NAVIGATE, ENTER TO SELECT"
+        self.draw_pixelized_text(
+            surface,
+            instruction_text,
+            font,
+            (200, 200, 200),
+            screen_width // 2,
+            screen_height - 80,
+            center=True
+        )
+    
+    def draw_background_clouds(self, surface):
+        """Draw some background clouds for atmosphere"""
+        # Create a few static clouds for the menu background
+        cloud_positions = [
+            (screen_width * 0.15, screen_height * 0.2, screen_width * 0.2, screen_height * 0.1),
+            (screen_width * 0.7, screen_height * 0.15, screen_width * 0.15, screen_height * 0.08),
+            (screen_width * 0.1, screen_height * 0.7, screen_width * 0.18, screen_height * 0.09),
+            (screen_width * 0.8, screen_height * 0.75, screen_width * 0.12, screen_height * 0.06),
+        ]
+        
+        for x, y, w, h in cloud_positions:
+            # Create a simple cloud for menu background
+            cloud = Cloud(int(x), int(y), int(w), int(h), 100)  # More transparent
+            surface.blit(cloud.image, (x, y))
+
+# Initialize menu system
+menu_system = MenuSystem()
 
 
 class Platform(pygame.sprite.Sprite):
@@ -839,146 +990,173 @@ while running:
             running = False
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                running = False
-            elif event.key == pygame.K_r:
-                # Reset current level
-                level_data = reset_level()
-            elif event.key == pygame.K_n and level_complete:
-                # Next level
-                if current_level < max_levels:
-                    current_level += 1
-                    level_data = reset_level()
+                if game_state == PLAYING:
+                    game_state = MENU  # Return to menu instead of exiting
                 else:
-                    # All levels completed
                     running = False
+        
+        # Handle menu input
+        if game_state == MENU:
+            menu_result = menu_system.handle_input(event)
+            if menu_result == "PLAY":
+                game_state = PLAYING
+                # Reset to level 1 when starting game
+                current_level = 1
+                level_data = reset_level()
+            elif menu_result == "EXIT":
+                running = False
+        
+        # Handle game input
+        elif game_state == PLAYING:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    # Reset current level
+                    level_data = reset_level()
+                elif event.key == pygame.K_n and level_complete:
+                    # Next level
+                    if current_level < max_levels:
+                        current_level += 1
+                        level_data = reset_level()
+                    else:
+                        # All levels completed - return to menu
+                        game_state = MENU
 
-    if not level_complete:
-        keys = pygame.key.get_pressed()
-        unicorn1.handle_input(keys, use_wasd=False)  # Arrow keys
-        unicorn2.handle_input(keys, use_wasd=True)  # WASD
+    # Update and draw based on game state
+    if game_state == MENU:
+        # Update menu
+        menu_system.update()
+        
+        # Draw menu
+        menu_system.draw(screen)
+        
+    elif game_state == PLAYING:
+        if not level_complete:
+            keys = pygame.key.get_pressed()
+            unicorn1.handle_input(keys, use_wasd=False)  # Arrow keys
+            unicorn2.handle_input(keys, use_wasd=True)  # WASD
 
-        # Update sprites
-        unicorn1.update()
-        unicorn2.update()
+            # Update sprites
+            unicorn1.update()
+            unicorn2.update()
 
-        # Check collisions
-        unicorn1.check_collisions(platforms, trees)
-        unicorn2.check_collisions(platforms, trees)
+            # Check collisions
+            unicorn1.check_collisions(platforms, trees)
+            unicorn2.check_collisions(platforms, trees)
 
-        # Check item collections
-        # Unicorn1 collects white items
-        for item in white_items:
-            if unicorn1.collect_item(item):
-                unicorn1.score += 1
-                item.kill()
+            # Check item collections
+            # Unicorn1 collects white items
+            for item in white_items:
+                if unicorn1.collect_item(item):
+                    unicorn1.score += 1
+                    item.kill()
 
-        # Unicorn2 collects black items
-        for item in black_items:
-            if unicorn2.collect_item(item):
-                unicorn2.score += 1
-                item.kill()
+            # Unicorn2 collects black items
+            for item in black_items:
+                if unicorn2.collect_item(item):
+                    unicorn2.score += 1
+                    item.kill()
 
-        # Check if both unicorns are fully inside the rainbow (not just touching border)
-        def is_fully_inside_rainbow(unicorn, rainbow):
-            if rainbow is None:
-                return False
-            # Check if unicorn is completely within rainbow boundaries
-            return (
-                unicorn.rect.left >= rainbow.rect.left
-                and unicorn.rect.right <= rainbow.rect.right
-                and unicorn.rect.top >= rainbow.rect.top
-                and unicorn.rect.bottom <= rainbow.rect.bottom
-            )
+            # Check if both unicorns are fully inside the rainbow (not just touching border)
+            def is_fully_inside_rainbow(unicorn, rainbow):
+                if rainbow is None:
+                    return False
+                # Check if unicorn is completely within rainbow boundaries
+                return (
+                    unicorn.rect.left >= rainbow.rect.left
+                    and unicorn.rect.right <= rainbow.rect.right
+                    and unicorn.rect.top >= rainbow.rect.top
+                    and unicorn.rect.bottom <= rainbow.rect.bottom
+                )
 
-        unicorn1_in_rainbow = is_fully_inside_rainbow(unicorn1, rainbow)
-        unicorn2_in_rainbow = is_fully_inside_rainbow(unicorn2, rainbow)
+            unicorn1_in_rainbow = is_fully_inside_rainbow(unicorn1, rainbow)
+            unicorn2_in_rainbow = is_fully_inside_rainbow(unicorn2, rainbow)
 
-        if unicorn1_in_rainbow and unicorn2_in_rainbow:
-            level_complete = True
-            # Create initial burst of glitters
-            for _ in range(100):
+            if unicorn1_in_rainbow and unicorn2_in_rainbow:
+                level_complete = True
+                # Create initial burst of glitters
+                for _ in range(100):
+                    glitters.append(
+                        Glitter(
+                            random.randint(0, screen_width),
+                            random.randint(0, screen_height),
+                        )
+                    )
+
+        # Update glitters
+        glitters = [g for g in glitters if g.update()]
+
+        # Add more glitters during level complete
+        if level_complete and len(glitters) < 200:
+            for _ in range(5):
                 glitters.append(
                     Glitter(
-                        random.randint(0, screen_width),
-                        random.randint(0, screen_height),
+                        random.randint(0, screen_width), random.randint(0, screen_height)
                     )
                 )
 
-    # Update glitters
-    glitters = [g for g in glitters if g.update()]
-
-    # Add more glitters during level complete
-    if level_complete and len(glitters) < 200:
-        for _ in range(5):
-            glitters.append(
-                Glitter(
-                    random.randint(0, screen_width), random.randint(0, screen_height)
-                )
-            )
-
-    # Draw background
-    if background_image:
-        screen.blit(background_image, (0, 0))
-    else:
-        screen.fill((50, 150, 50))
-    
-    # Draw ground
-    draw_ground(screen)
-    
-    all_sprites.draw(screen)
-
-    # Draw glitters
-    for glitter in glitters:
-        glitter.draw(screen)
-
-    # Draw score counters and level info
-    level_name = level_data.get("level", {}).get("name", f"Level {current_level}")
-    level_text = font.render(f"{level_name}", True, (255, 255, 255))
-    score1_text = font.render(
-        f"Player 1 (White): {unicorn1.score}", True, (255, 255, 255)
-    )
-    score2_text = font.render(
-        f"Player 2 (Black): {unicorn2.score}", True, (255, 255, 255)
-    )
-
-    screen.blit(level_text, (20, 20))
-    screen.blit(score1_text, (20, 60))
-    screen.blit(score2_text, (20, 100))
-
-    # Draw level complete message
-    if level_complete:
-        complete_text = font.render("LEVEL COMPLETE!", True, (255, 255, 255))
-        text_rect = complete_text.get_rect(
-            center=(screen_width // 2, screen_height // 2)
-        )
-
-        # Draw background for text
-        background_rect = text_rect.inflate(40, 20)
-        pygame.draw.rect(screen, (0, 0, 0, 128), background_rect)
-        pygame.draw.rect(screen, (255, 255, 255), background_rect, 3)
-
-        screen.blit(complete_text, text_rect)
-
-        # Draw instructions
-        if current_level < max_levels:
-            instruction_text = font.render(
-                "Press N for next level or ESC to exit", True, (255, 255, 255)
-            )
+        # Draw background
+        if background_image:
+            screen.blit(background_image, (0, 0))
         else:
-            instruction_text = font.render(
-                "All levels completed! Press ESC to exit", True, (255, 255, 255)
-            )
-        instruction_rect = instruction_text.get_rect(
-            center=(screen_width // 2, screen_height // 2 + 50)
-        )
-        screen.blit(instruction_text, instruction_rect)
+            screen.fill((50, 150, 50))
+        
+        # Draw ground
+        draw_ground(screen)
+        
+        all_sprites.draw(screen)
 
-        # Draw reset instruction
-        reset_text = font.render("Press R to reset level", True, (255, 255, 255))
-        reset_rect = reset_text.get_rect(
-            center=(screen_width // 2, screen_height // 2 + 90)
+        # Draw glitters
+        for glitter in glitters:
+            glitter.draw(screen)
+
+        # Draw score counters and level info
+        level_name = level_data.get("level", {}).get("name", f"Level {current_level}")
+        level_text = font.render(f"{level_name}", True, (255, 255, 255))
+        score1_text = font.render(
+            f"Player 1 (White): {unicorn1.score}", True, (255, 255, 255)
         )
-        screen.blit(reset_text, reset_rect)
+        score2_text = font.render(
+            f"Player 2 (Black): {unicorn2.score}", True, (255, 255, 255)
+        )
+
+        screen.blit(level_text, (20, 20))
+        screen.blit(score1_text, (20, 60))
+        screen.blit(score2_text, (20, 100))
+
+        # Draw level complete message
+        if level_complete:
+            complete_text = font.render("LEVEL COMPLETE!", True, (255, 255, 255))
+            text_rect = complete_text.get_rect(
+                center=(screen_width // 2, screen_height // 2)
+            )
+
+            # Draw background for text
+            background_rect = text_rect.inflate(40, 20)
+            pygame.draw.rect(screen, (0, 0, 0, 128), background_rect)
+            pygame.draw.rect(screen, (255, 255, 255), background_rect, 3)
+
+            screen.blit(complete_text, text_rect)
+
+            # Draw instructions
+            if current_level < max_levels:
+                instruction_text = font.render(
+                    "Press N for next level or ESC for menu", True, (255, 255, 255)
+                )
+            else:
+                instruction_text = font.render(
+                    "All levels completed! Press ESC for menu", True, (255, 255, 255)
+                )
+            instruction_rect = instruction_text.get_rect(
+                center=(screen_width // 2, screen_height // 2 + 50)
+            )
+            screen.blit(instruction_text, instruction_rect)
+
+            # Draw reset instruction
+            reset_text = font.render("Press R to reset level", True, (255, 255, 255))
+            reset_rect = reset_text.get_rect(
+                center=(screen_width // 2, screen_height // 2 + 90)
+            )
+            screen.blit(reset_text, reset_rect)
 
     pygame.display.flip()
     clock.tick(60)
