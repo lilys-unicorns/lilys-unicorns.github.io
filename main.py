@@ -97,6 +97,7 @@ def create_level_objects(level_data, screen_width, screen_height):
     """Create game objects from level data"""
     objects = {
         "platforms": pygame.sprite.Group(),
+        "trees": pygame.sprite.Group(),
         "white_items": pygame.sprite.Group(),
         "black_items": pygame.sprite.Group(),
         "rainbow": None,
@@ -130,6 +131,23 @@ def create_level_objects(level_data, screen_width, screen_height):
                 alpha,
             )
             objects["platforms"].add(platform)
+
+    # Create trees
+    if "trees" in level_data:
+        for tree_data in level_data["trees"]:
+            # Convert percentage-based positioning to pixels
+            x_pos = percentage_to_pixels(tree_data["x"], screen_width)
+            y_pos = percentage_to_pixels(tree_data["y"], screen_height)
+            width = percentage_to_pixels(tree_data["width"], screen_width)
+            height = percentage_to_pixels(tree_data["height"], screen_height)
+            
+            tree = Tree(
+                x_pos,
+                screen_height - y_pos,  # Convert from bottom-relative to top-relative
+                width,
+                height,
+            )
+            objects["trees"].add(tree)
 
     # Create white items
     if "white_items" in level_data:
@@ -229,6 +247,52 @@ class Platform(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, width, height)
         self.color = color
         self.alpha = alpha
+
+
+class Tree(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height):
+        super().__init__()
+        self.image = pygame.Surface((width, height), pygame.SRCALPHA)
+        self.rect = pygame.Rect(x, y, width, height)
+        
+        # Calculate trunk dimensions and position
+        trunk_width = int(width * 0.2)
+        trunk_height = int(height * 0.6)  # Taller trunk
+        trunk_x = (width - trunk_width) // 2
+        trunk_y = height - trunk_height
+        
+        # Calculate foliage dimensions and position
+        crown_radius = int(width * 0.4)
+        crown_color = (34, 139, 34)
+        trunk_color = (101, 67, 33)
+        
+        # Position foliage to connect with trunk top
+        foliage_center_x = width // 2
+        foliage_center_y = trunk_y + crown_radius // 2  # Connect to trunk top
+        
+        # Draw tree trunk (brown) - draw first so foliage overlaps
+        pygame.draw.rect(self.image, trunk_color, (trunk_x, trunk_y, trunk_width, trunk_height))
+        
+        # Draw tree crown (green circles for foliage) - overlapping for natural look
+        # Main foliage circle
+        pygame.draw.circle(self.image, crown_color, (foliage_center_x, foliage_center_y), crown_radius)
+        
+        # Additional smaller circles for fuller, more natural look
+        pygame.draw.circle(self.image, crown_color, 
+                         (foliage_center_x - crown_radius // 2, foliage_center_y + crown_radius // 3), 
+                         crown_radius // 2)
+        pygame.draw.circle(self.image, crown_color, 
+                         (foliage_center_x + crown_radius // 2, foliage_center_y + crown_radius // 3), 
+                         crown_radius // 2)
+        
+        # Top small circle for tree top
+        pygame.draw.circle(self.image, crown_color, 
+                         (foliage_center_x, foliage_center_y - crown_radius // 2), 
+                         crown_radius // 3)
+        
+        # Top collision area (only the top 10% of the tree for standing)
+        self.top_collision_height = int(height * 0.1)
+        self.top_collision_rect = pygame.Rect(x, y, width, self.top_collision_height)
 
 
 class Item(pygame.sprite.Sprite):
@@ -401,7 +465,7 @@ class Unicorn(pygame.sprite.Sprite):
         if self.rect.top < 0:
             self.rect.top = 0
 
-    def check_collisions(self, platforms):
+    def check_collisions(self, platforms, trees=None):
         self.on_ground = False
         self.can_climb = False
 
@@ -436,6 +500,16 @@ class Unicorn(pygame.sprite.Sprite):
                 elif min_overlap == overlap_right and self.vel_x < 0:
                     self.rect.left = platform.rect.right
                     self.can_climb = True
+
+        # Check tree collisions (top-only)
+        if trees:
+            for tree in trees:
+                # Only check collision with the top part of the tree
+                if self.rect.colliderect(tree.top_collision_rect) and self.vel_y > 0:
+                    # Landing on top of tree (falling down)
+                    self.rect.bottom = tree.top_collision_rect.top
+                    self.vel_y = 0
+                    self.on_ground = True
 
         # Check ground collision
         if self.rect.bottom >= self.ground_y:
@@ -532,7 +606,7 @@ def load_current_level():
 
 def reset_level():
     """Reset the current level"""
-    global level_complete, glitters, unicorn1, unicorn2, platforms, white_items, black_items, rainbow, all_sprites
+    global level_complete, glitters, unicorn1, unicorn2, platforms, trees, white_items, black_items, rainbow, all_sprites
 
     level_complete = False
     glitters = []
@@ -560,6 +634,7 @@ def reset_level():
 
     # Get level objects
     platforms = level_objects["platforms"]
+    trees = level_objects["trees"]
     white_items = level_objects["white_items"]
     black_items = level_objects["black_items"]
     rainbow = level_objects["rainbow"]
@@ -569,6 +644,7 @@ def reset_level():
     all_sprites.add(unicorn1)
     all_sprites.add(unicorn2)
     all_sprites.add(platforms)
+    all_sprites.add(trees)
     all_sprites.add(white_items)
     all_sprites.add(black_items)
     if rainbow:
@@ -611,8 +687,8 @@ while running:
         unicorn2.update()
 
         # Check collisions
-        unicorn1.check_collisions(platforms)
-        unicorn2.check_collisions(platforms)
+        unicorn1.check_collisions(platforms, trees)
+        unicorn2.check_collisions(platforms, trees)
 
         # Check item collections
         # Unicorn1 collects white items

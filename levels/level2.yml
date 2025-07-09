@@ -68,6 +68,16 @@ platforms:
     color: [200, 200, 255]  # Very Light Blue
     alpha: 160  # More transparent
 
+trees:
+  - x: 20  # Percentage of screen width
+    y: 70  # Percentage of screen height from bottom
+    width: 8   # Percentage of screen width
+    height: 45 # Percentage of screen height
+  - x: 76
+    y: 65
+    width: 6
+    height: 40
+
 white_items:
   - x: 6  # Percentage of screen width
     y: 28  # Percentage of screen height from bottom

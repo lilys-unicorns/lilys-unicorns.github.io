@@ -38,18 +38,38 @@ platforms:
     height: 3
     color: [255, 255, 0]  # Yellow
     alpha: 120  # More transparent
-  - x: 75
+  - x: 60
     y: 28
     width: 12
     height: 3
     color: [255, 0, 255]  # Magenta
     alpha: 255  # Fully opaque
-  - x: 90
-    y: 62
+  - x: 60
+    y: 10
     width: 12
     height: 3
     color: [0, 255, 255]  # Cyan
     alpha: 150  # Semi-transparent
+  - x: 80
+    y: 50
+    width: 12
+    height: 3
+    color: [0, 255, 255]  # Cyan
+    alpha: 150  # Semi-transparent
+
+trees:
+  - x: 10  # Percentage of screen width
+    y: 50  # Percentage of screen height from bottom
+    width: 8   # Percentage of screen width
+    height: 35 # Percentage of screen height
+  - x: 55
+    y: 60
+    width: 6
+    height: 40
+  - x: 88
+    y: 45
+    width: 7
+    height: 30
 
 white_items:
   - x: 20  # Percentage of screen width
@@ -76,7 +96,7 @@ black_items:
     y: 70
 
 rainbow:
-  x: 25  # Percentage from right edge of screen
-  y: 42  # Percentage from bottom of screen
-  width: 15  # Percentage of screen width
-  height: 28  # Percentage of screen height
+  x: 15  # Percentage from right edge of screen
+  y: 20  # Percentage from bottom of screen
+  width: 10  # Percentage of screen width
+  height: 20  # Percentage of screen height

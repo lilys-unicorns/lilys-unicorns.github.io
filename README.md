@@ -12,6 +12,7 @@ Lily Unicorns is a cooperative 2D platformer featuring two unicorns with differe
 - **Animated Unicorn Sprites**: Uses kaitlyn_unicorn.png sprite sheet with 15 animation frames
 - **Physics-Based Movement**: Gravity, jumping, and climbing mechanics
 - **Colorful Platforms**: Climbable platforms with distinct colors and transparency support
+- **Interactive Trees**: Decorative trees that unicorns can stand on top of but pass through
 - **Item Collection**: White items for Player 1, black items for Player 2
 - **Rainbow Completion**: Level ends when both unicorns reach the rainbow
 - **Glitter Effects**: Beautiful particle effects on level completion
@@ -119,6 +120,17 @@ platforms:
     alpha: 128          # Semi-transparent platform
   # Add more platforms...
 
+trees:
+  - x: 10               # X position from left (percentage of screen width)
+    y: 50               # Y position from bottom of screen (percentage of screen height)
+    width: 8            # Tree width (percentage of screen width)
+    height: 35          # Tree height (percentage of screen height)
+  - x: 55
+    y: 60
+    width: 6
+    height: 40
+  # Add more trees...
+
 white_items:
   - x: 20     # X position from left (percentage of screen width)
     y: 42     # Y position from bottom of screen (percentage of screen height)
@@ -164,6 +176,13 @@ rainbow:
 - Values range from 0 (completely invisible) to 255 (fully opaque)
 - If `alpha` is not specified, platforms default to fully opaque (255)
 - Great for creating glass-like platforms or overlapping level elements
+
+#### Interactive Trees
+- Trees are decorative elements that add visual depth to levels
+- Unicorns can **pass through** trees horizontally (no collision)
+- Unicorns can **stand on top** of trees (top collision only)
+- Trees are drawn with brown trunks and green foliage
+- Use trees to create forest-like environments and additional platforms
 
 ### Adding New Levels
 

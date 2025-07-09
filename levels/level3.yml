@@ -58,6 +58,20 @@ platforms:
     color: [255, 127, 0]  # Orange
     alpha: 170  # Semi-transparent
 
+trees:
+  - x: 8   # Percentage of screen width
+    y: 80  # Percentage of screen height from bottom
+    width: 6   # Percentage of screen width
+    height: 50 # Percentage of screen height
+  - x: 45
+    y: 85
+    width: 5
+    height: 45
+  - x: 82
+    y: 75
+    width: 7
+    height: 40
+
 white_items:
   - x: 20  # Percentage of screen width
     y: 28  # Percentage of screen height from bottom
