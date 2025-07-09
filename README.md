@@ -19,7 +19,7 @@ Lily Unicorns is a cooperative 2D platformer featuring two unicorns with differe
 - **YAML Level System**: Easily customizable levels through YAML configuration files
 - **Background Images**: Support for custom background images per level
 - **Transparent Platforms**: Platforms can have varying transparency levels
-- **Multiple Levels**: Three built-in levels with increasing difficulty
+- **Multiple Levels**: Built-in levels with increasing difficulty (automatically detects all level files)
 
 ## Requirements
 
@@ -184,13 +184,18 @@ rainbow:
 - Trees are drawn with brown trunks and green foliage
 - Use trees to create forest-like environments and additional platforms
 
+#### Automatic Level Detection
+- The game automatically detects all level files in the `levels/` directory
+- No need to manually update level counts in the code
+- Simply add new `levelX.yml` files and they'll be immediately available
+- Level numbering can be non-sequential (e.g., level1.yml, level3.yml, level7.yml)
+
 ### Adding New Levels
 
 1. Create a new YAML file in the `levels/` directory (e.g., `levels/level4.yml`)
 2. Follow the format above
-3. Update the `max_levels` variable in `main.py` to include your new level count
-4. Add any background images to the `assets/backgrounds/` directory
-5. Run the game and your new level will be available!
+3. Add any background images to the `assets/backgrounds/` directory
+4. Run the game - new levels are automatically detected and available!
 
 ## File Structure
 

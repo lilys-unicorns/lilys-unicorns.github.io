@@ -4,6 +4,7 @@ import random
 import math
 import yaml
 import os
+import glob
 
 pygame.init()
 
@@ -36,6 +37,32 @@ def invert_surface_colors(surface):
     inverted.unlock()
 
     return inverted
+
+
+def get_max_levels():
+    """Automatically detect the number of level files in the levels folder"""
+    try:
+        # Get all level*.yml files in the levels directory
+        level_files = glob.glob("levels/level*.yml")
+        
+        # Extract level numbers and find the maximum
+        level_numbers = []
+        for file_path in level_files:
+            # Extract filename without path and extension
+            filename = os.path.basename(file_path)
+            # Extract number from filename (e.g., "level3.yml" -> "3")
+            if filename.startswith("level") and filename.endswith(".yml"):
+                try:
+                    level_num = int(filename[5:-4])  # Remove "level" and ".yml"
+                    level_numbers.append(level_num)
+                except ValueError:
+                    continue
+        
+        # Return the highest level number, or 1 if no levels found
+        return max(level_numbers) if level_numbers else 1
+    except Exception as e:
+        print(f"Error detecting level files: {e}")
+        return 3  # Fallback to default
 
 
 def load_level(level_file):
@@ -566,7 +593,7 @@ class Unicorn(pygame.sprite.Sprite):
 
 # Level management
 current_level = 1
-max_levels = 3
+max_levels = get_max_levels()  # Automatically detect number of level files
 
 
 def load_current_level():
