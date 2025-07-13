@@ -396,17 +396,26 @@
                 this.levelPositions = {};
                 this.connections = [];
                 this.levelNames = {}; // Cache for level names
+                this.levelDataCache = new Map(); // Cache for loaded level data
                 
                 this.init();
             }
             
             async init() {
+                // Show basic map immediately
                 await this.detectMaxLevels();
-                await this.loadLevelNames();
                 this.generateLevelPositions();
                 this.createConnections();
                 this.renderMap();
                 this.setupEventListeners();
+                
+                // Load level names asynchronously without blocking the UI
+                this.loadLevelNames().then(() => {
+                    // Re-render map with proper names once loaded
+                    this.renderMap();
+                }).catch(error => {
+                    console.warn('Failed to load some level names:', error);
+                });
             }
             
             async detectMaxLevels() {
@@ -449,18 +458,36 @@
             }
             
             async loadLevelNames() {
-                // Load level names from JSON files
+                // Load level names from JSON files in parallel for better performance
+                const promises = [];
+                
                 for (let level = 1; level <= this.maxLevels; level++) {
-                    try {
-                        const levelData = await this.loadLevelData(level);
-                        if (levelData && levelData.level && levelData.level.name) {
-                            this.levelNames[level] = levelData.level.name;
-                        } else {
-                            this.levelNames[level] = `Level ${level}`;
-                        }
-                    } catch (error) {
-                        this.levelNames[level] = `Level ${level}`;
+                    promises.push(
+                        this.loadLevelName(level).catch(() => `Level ${level}`)
+                    );
+                }
+                
+                const names = await Promise.all(promises);
+                names.forEach((name, index) => {
+                    this.levelNames[index + 1] = name;
+                });
+            }
+            
+            async loadLevelName(level) {
+                // Load only what we need for the name, with caching
+                try {
+                    const response = await fetch(`levels/level${level}.json`, {
+                        cache: 'default' // Allow browser caching for better performance
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
+                    
+                    const levelData = await response.json();
+                    return (levelData && levelData.level && levelData.level.name) || `Level ${level}`;
+                } catch (error) {
+                    return `Level ${level}`;
                 }
             }
             
@@ -762,26 +789,36 @@
             }
             
             async loadLevelData(level) {
+                // Check cache first
+                if (this.levelDataCache.has(level)) {
+                    return this.levelDataCache.get(level);
+                }
+                
                 try {
                     const response = await fetch(`levels/level${level}.json`, {
-                        cache: 'no-store',
-                        headers: { 'Cache-Control': 'no-cache' }
+                        cache: 'default' // Allow browser caching for better performance
                     });
                     
                     if (response.ok) {
-                        return await response.json();
+                        const data = await response.json();
+                        this.levelDataCache.set(level, data); // Cache the result
+                        return data;
                     }
                     
                     // Fallback to embedded data
                     if (typeof LEVEL_DATA !== 'undefined' && LEVEL_DATA[level]) {
-                        return LEVEL_DATA[level];
+                        const data = LEVEL_DATA[level];
+                        this.levelDataCache.set(level, data);
+                        return data;
                     }
                     
                     return null;
                 } catch (error) {
                     // Try embedded data
                     if (typeof LEVEL_DATA !== 'undefined' && LEVEL_DATA[level]) {
-                        return LEVEL_DATA[level];
+                        const data = LEVEL_DATA[level];
+                        this.levelDataCache.set(level, data);
+                        return data;
                     }
                     throw error;
                 }
