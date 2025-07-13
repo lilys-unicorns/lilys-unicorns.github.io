@@ -625,6 +625,9 @@ class Game {
             this.player1.update(this.keys, this.platforms, this.trees, this.texts);
             this.player2.update(this.keys, this.platforms, this.trees, this.texts);
             
+            // Handle cross-unicorn bubble communication
+            this.updateBubbleCommunication();
+            
             // Check item collection
             this.checkItemCollection();
             
@@ -901,6 +904,30 @@ class Game {
         }
     }
     
+    updateBubbleCommunication() {
+        // Check if player1 is idle for 3+ seconds, then player2 should show talking bubble
+        if (this.player1.idleTimer >= 180 && !this.player1.showTalkingBubble) {
+            this.player2.showTalkingBubble = true;
+            if (!this.player2.talkingText) {
+                this.player2.talkingText = this.player2.bubbleMessages[Math.floor(Math.random() * this.player2.bubbleMessages.length)];
+            }
+        } else if (this.player1.idleTimer < 180) {
+            this.player2.showTalkingBubble = false;
+            this.player2.talkingText = '';
+        }
+        
+        // Check if player2 is idle for 3+ seconds, then player1 should show talking bubble
+        if (this.player2.idleTimer >= 180 && !this.player2.showTalkingBubble) {
+            this.player1.showTalkingBubble = true;
+            if (!this.player1.talkingText) {
+                this.player1.talkingText = this.player1.bubbleMessages[Math.floor(Math.random() * this.player1.bubbleMessages.length)];
+            }
+        } else if (this.player2.idleTimer < 180) {
+            this.player1.showTalkingBubble = false;
+            this.player1.talkingText = '';
+        }
+    }
+    
     updateClouds() {
         this.clouds.forEach(cloud => cloud.update());
     }
@@ -1121,6 +1148,25 @@ class Unicorn {
         this.lastAnimationState = 'idle';
         this.animationStateTimer = 0;
         
+        // Bubble system
+        this.idleTimer = 0;
+        this.showThinkingBubble = false;
+        this.showTalkingBubble = false;
+        this.talkingText = '';
+        this.bubbleMessages = [
+            "come on!",
+            "yalla!",
+            "c'mon!",
+            "let's go!",
+            "move it!",
+            "hurry up!",
+            "what are you waiting for?",
+            "go go go!",
+            "wake up!",
+            "don't just stand there!",
+            "we need to work together!"
+        ];
+        
         // Physics
         this.velocityX = 0;
         this.velocityY = 0;
@@ -1146,6 +1192,7 @@ class Unicorn {
         this.handleCollisions(platforms, trees, texts);
         this.updateAnimationState();
         this.updateAnimation();
+        this.updateBubbles();
     }
     
     handleInput(keys) {
@@ -1364,6 +1411,27 @@ class Unicorn {
         }
     }
     
+    updateBubbles() {
+        // Check if unicorn is idle (not moving)
+        const isIdle = Math.abs(this.velocityX) < 0.1 && this.onGround;
+        
+        if (isIdle) {
+            this.idleTimer++;
+            
+            // Show thinking bubble after 1 second (60 FPS = 60 frames)
+            if (this.idleTimer >= 60) {
+                this.showThinkingBubble = true;
+            }
+            
+            // Note: Talking bubble is now handled by the game's communication system
+        } else {
+            // Reset when moving
+            this.idleTimer = 0;
+            this.showThinkingBubble = false;
+            // Note: Don't reset talking bubble here as it's controlled by the other unicorn's state
+        }
+    }
+    
     render(ctx) {
         if (!this.spriteImage) return;
         
@@ -1407,6 +1475,98 @@ class Unicorn {
             srcX, srcY, this.frameWidth, this.frameHeight,
             0, this.y, this.width, this.height
         );
+        
+        ctx.restore();
+        
+        // Render bubbles after restoring context to avoid transformation issues
+        this.renderBubbles(ctx);
+    }
+    
+    renderBubbles(ctx) {
+        const bubbleX = this.x + this.width / 2;
+        const bubbleY = this.y - 10;
+        
+        // Thinking bubble (appears after 1 second)
+        if (this.showThinkingBubble) {
+            this.drawThinkingBubble(ctx, bubbleX, bubbleY);
+        }
+        
+        // Talking bubble (appears after 3 seconds)
+        if (this.showTalkingBubble) {
+            this.drawTalkingBubble(ctx, bubbleX, bubbleY - 40, this.talkingText);
+        }
+    }
+    
+    drawThinkingBubble(ctx, x, y) {
+        ctx.save();
+        
+        // Draw cloud-like thinking bubble
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        
+        // Main bubble
+        ctx.beginPath();
+        ctx.arc(x, y - 20, 15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Smaller bubbles leading to unicorn
+        ctx.beginPath();
+        ctx.arc(x - 5, y - 5, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.arc(x - 8, y + 3, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Add "..." in the main bubble
+        ctx.fillStyle = '#333';
+        ctx.font = '12px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('...', x, y - 16);
+        
+        ctx.restore();
+    }
+    
+    drawTalkingBubble(ctx, x, y, text) {
+        ctx.save();
+        
+        // Measure text to size bubble
+        ctx.font = '14px monospace';
+        const textWidth = ctx.measureText(text).width;
+        const bubbleWidth = Math.max(textWidth + 20, 60);
+        const bubbleHeight = 30;
+        
+        // Draw speech bubble
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        
+        // Bubble body (rounded rectangle)
+        const bubbleX = x - bubbleWidth / 2;
+        const bubbleY = y - bubbleHeight;
+        
+        ctx.beginPath();
+        ctx.roundRect(bubbleX, bubbleY, bubbleWidth, bubbleHeight, 8);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Speech bubble tail pointing to unicorn
+        ctx.beginPath();
+        ctx.moveTo(x - 8, y);
+        ctx.lineTo(x, y + 8);
+        ctx.lineTo(x + 8, y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        
+        // Draw text
+        ctx.fillStyle = '#333';
+        ctx.textAlign = 'center';
+        ctx.fillText(text, x, bubbleY + bubbleHeight / 2 + 4);
         
         ctx.restore();
     }
