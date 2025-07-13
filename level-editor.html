@@ -197,6 +197,7 @@
                 <button class="tool-button" id="triangleTool">Add Triangle</button>
                 <button class="tool-button" id="swampTool">Add Swamp</button>
                 <button class="tool-button" id="rainbowTool">Add Rainbow</button>
+                <button class="tool-button" id="textTool">Add Text</button>
                 <button class="tool-button" id="deleteTool">Delete</button>
             </div>
             
@@ -235,6 +236,28 @@
                         <label>Alpha:</label>
                         <input type="range" id="editAlphaSlider" min="0" max="255" value="255">
                         <span id="editAlphaValue">255</span>
+                    </div>
+                    
+                    <div class="input-group" id="editTextGroup" style="display: none;">
+                        <label>Text Content:</label>
+                        <input type="text" id="editTextContent" placeholder="Enter text here">
+                    </div>
+                    
+                    <div class="input-group" id="editFontSizeGroup" style="display: none;">
+                        <label>Font Size:</label>
+                        <input type="range" id="editFontSizeSlider" min="12" max="48" value="20">
+                        <span id="editFontSizeValue">20</span>
+                    </div>
+                    
+                    <div class="input-group" id="editTextColorGroup" style="display: none;">
+                        <label>Text Color:</label>
+                        <input type="color" id="editTextColorPicker" class="color-input" value="#000000">
+                    </div>
+                    
+                    <div class="input-group" id="editCanStandGroup" style="display: none;">
+                        <label>
+                            <input type="checkbox" id="editCanStandOnText"> Unicorns can stand on text
+                        </label>
                     </div>
                     
                     <button class="tool-button" id="applyChangesBtn" style="background: #2196F3;">Apply Changes</button>
@@ -283,6 +306,28 @@
                     <label>Height:</label>
                     <input type="range" id="heightSlider" min="1" max="30" value="8">
                     <span id="heightValue">8</span>
+                </div>
+                
+                <div class="input-group">
+                    <label>Text Content:</label>
+                    <input type="text" id="textContent" placeholder="Enter text here">
+                </div>
+                
+                <div class="input-group">
+                    <label>Font Size:</label>
+                    <input type="range" id="fontSizeSlider" min="12" max="48" value="20">
+                    <span id="fontSizeValue">20</span>
+                </div>
+                
+                <div class="input-group">
+                    <label>Text Color:</label>
+                    <input type="color" id="textColorPicker" class="color-input" value="#000000">
+                </div>
+                
+                <div class="input-group">
+                    <label>
+                        <input type="checkbox" id="canStandOnText"> Unicorns can stand on text
+                    </label>
                 </div>
             </div>
             
@@ -361,6 +406,7 @@
                     black_items: [],
                     triangles: [],
                     swamps: [],
+                    texts: [],
                     rainbow: null
                 };
                 
@@ -384,6 +430,7 @@
                 document.getElementById('triangleTool').addEventListener('click', () => this.setTool('triangle'));
                 document.getElementById('swampTool').addEventListener('click', () => this.setTool('swamp'));
                 document.getElementById('rainbowTool').addEventListener('click', () => this.setTool('rainbow'));
+                document.getElementById('textTool').addEventListener('click', () => this.setTool('text'));
                 document.getElementById('deleteTool').addEventListener('click', () => this.setTool('delete'));
                 
                 // Canvas events
@@ -413,6 +460,10 @@
                     document.getElementById('heightValue').textContent = e.target.value;
                 });
                 
+                document.getElementById('fontSizeSlider').addEventListener('input', (e) => {
+                    document.getElementById('fontSizeValue').textContent = e.target.value;
+                });
+                
                 // Edit controls
                 document.getElementById('editWidthSlider').addEventListener('input', (e) => {
                     document.getElementById('editWidthValue').textContent = e.target.value;
@@ -437,6 +488,24 @@
                 document.getElementById('editAlphaSlider').addEventListener('input', (e) => {
                     document.getElementById('editAlphaValue').textContent = e.target.value;
                     this.updateSelectedElementProperty('alpha', parseInt(e.target.value));
+                });
+                
+                document.getElementById('editTextContent').addEventListener('input', (e) => {
+                    this.updateSelectedElementProperty('text', e.target.value);
+                });
+                
+                document.getElementById('editFontSizeSlider').addEventListener('input', (e) => {
+                    document.getElementById('editFontSizeValue').textContent = e.target.value;
+                    this.updateSelectedElementProperty('fontSize', parseInt(e.target.value));
+                });
+                
+                document.getElementById('editTextColorPicker').addEventListener('input', (e) => {
+                    const color = this.hexToRgb(e.target.value);
+                    this.updateSelectedElementProperty('textColor', color);
+                });
+                
+                document.getElementById('editCanStandOnText').addEventListener('change', (e) => {
+                    this.updateSelectedElementProperty('canStandOn', e.target.checked);
                 });
                 
                 document.getElementById('applyChangesBtn').addEventListener('click', () => {
@@ -534,6 +603,8 @@
                     this.addSwamp(percent.x, percent.y);
                 } else if (this.currentTool === 'rainbow') {
                     this.addRainbow(percent.x, percent.y);
+                } else if (this.currentTool === 'text') {
+                    this.addText(percent.x, percent.y);
                 } else if (this.currentTool === 'delete') {
                     this.deleteElementAt(pos.x, pos.y);
                 }
@@ -648,6 +719,22 @@
                     width: width,
                     height: height
                 };
+            }
+            
+            addText(x, y) {
+                const textContent = document.getElementById('textContent').value || 'Sample Text';
+                const fontSize = parseInt(document.getElementById('fontSizeSlider').value);
+                const textColor = this.hexToRgb(document.getElementById('textColorPicker').value);
+                const canStandOn = document.getElementById('canStandOnText').checked;
+                
+                this.levelData.texts.push({
+                    x: x,
+                    y: y,
+                    text: textContent,
+                    fontSize: fontSize,
+                    textColor: textColor,
+                    canStandOn: canStandOn
+                });
             }
             
             hexToRgb(hex) {
@@ -767,6 +854,20 @@
                     
                     if (this.isPointInRect(x, y, gameX, gameY, width, height)) {
                         return { type: 'rainbow', data: this.levelData.rainbow };
+                    }
+                }
+                
+                // Check texts
+                const texts = this.levelData.texts || [];
+                for (let i = 0; i < texts.length; i++) {
+                    const text = texts[i];
+                    const pos = this.percentToScreen(text.x, text.y);
+                    // Estimate text bounds based on font size and content length
+                    const textWidth = text.text.length * (text.fontSize * 0.6);
+                    const textHeight = text.fontSize;
+                    
+                    if (this.isPointInRect(x, y, pos.x, pos.y - textHeight, textWidth, textHeight)) {
+                        return { type: 'text', data: text, array: texts, index: i };
                     }
                 }
                 
@@ -1017,6 +1118,22 @@
                     this.ctx.restore();
                 }
                 
+                // Draw texts
+                (this.levelData.texts || []).forEach(text => {
+                    const pos = this.percentToScreen(text.x, text.y);
+                    const textColor = text.textColor || [0, 0, 0];
+                    
+                    this.ctx.fillStyle = `rgb(${textColor[0]}, ${textColor[1]}, ${textColor[2]})`;
+                    this.ctx.font = `${text.fontSize || 20}px monospace`;
+                    this.ctx.textAlign = 'left';
+                    this.ctx.fillText(text.text || 'Sample Text', pos.x, pos.y);
+                    
+                    // Draw outline for better visibility
+                    this.ctx.strokeStyle = '#fff';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.strokeText(text.text || 'Sample Text', pos.x, pos.y);
+                });
+                
                 // Draw unicorns
                 const unicorn1Y = this.levelData.unicorns.unicorn1.y || 50;
                 const unicorn2Y = this.levelData.unicorns.unicorn2.y || 50;
@@ -1155,6 +1272,10 @@
                 document.getElementById('editSizeGroup').style.display = 'none';
                 document.getElementById('editColorGroup').style.display = 'none';
                 document.getElementById('editAlphaGroup').style.display = 'none';
+                document.getElementById('editTextGroup').style.display = 'none';
+                document.getElementById('editFontSizeGroup').style.display = 'none';
+                document.getElementById('editTextColorGroup').style.display = 'none';
+                document.getElementById('editCanStandGroup').style.display = 'none';
                 
                 const data = this.selectedElement.data;
                 
@@ -1191,6 +1312,23 @@
                     document.getElementById('editAlphaGroup').style.display = 'block';
                     document.getElementById('editAlphaSlider').value = data.alpha;
                     document.getElementById('editAlphaValue').textContent = data.alpha;
+                }
+                
+                if (this.selectedElement.type === 'text') {
+                    document.getElementById('editTextGroup').style.display = 'block';
+                    document.getElementById('editTextContent').value = data.text || 'Sample Text';
+                    
+                    document.getElementById('editFontSizeGroup').style.display = 'block';
+                    document.getElementById('editFontSizeSlider').value = data.fontSize || 20;
+                    document.getElementById('editFontSizeValue').textContent = data.fontSize || 20;
+                    
+                    document.getElementById('editTextColorGroup').style.display = 'block';
+                    const textColor = data.textColor || [0, 0, 0];
+                    const hexTextColor = this.rgbToHex(textColor);
+                    document.getElementById('editTextColorPicker').value = hexTextColor;
+                    
+                    document.getElementById('editCanStandGroup').style.display = 'block';
+                    document.getElementById('editCanStandOnText').checked = data.canStandOn || false;
                 }
             }
             
@@ -1234,6 +1372,7 @@
                 if (!this.levelData.black_items) this.levelData.black_items = [];
                 if (!this.levelData.triangles) this.levelData.triangles = [];
                 if (!this.levelData.swamps) this.levelData.swamps = [];
+                if (!this.levelData.texts) this.levelData.texts = [];
                 if (this.levelData.rainbow === undefined) this.levelData.rainbow = null;
             }
             

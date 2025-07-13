@@ -110,6 +110,7 @@ class Game {
         this.blackItems = [];
         this.triangles = [];
         this.swamps = [];
+        this.texts = [];
         this.rainbow = null;
         
         // Scoring
@@ -521,6 +522,21 @@ class Game {
             });
         }
         
+        // Create texts
+        this.texts = [];
+        if (this.levelData.texts) {
+            this.levelData.texts.forEach(text => {
+                this.texts.push(new Text(
+                    this.width * (text.x / 100),
+                    this.height - (this.height * (text.y / 100)),
+                    text.text || 'Sample Text',
+                    text.fontSize || 20,
+                    text.textColor || [0, 0, 0],
+                    text.canStandOn || false
+                ));
+            });
+        }
+        
         // Create rainbow
         if (this.levelData.rainbow) {
             this.rainbow = new Rainbow(
@@ -571,6 +587,8 @@ class Game {
             new Swamp(300, 500, 100, 50, [139, 69, 19])
         ];
         
+        this.texts = [];
+        
         this.rainbow = new Rainbow(1000, 200, 150, 200);
     }
     
@@ -590,8 +608,8 @@ class Game {
     update() {
         if (this.gameState === 'PLAYING' && this.player1 && this.player2) {
             // Update players
-            this.player1.update(this.keys, this.platforms, this.trees);
-            this.player2.update(this.keys, this.platforms, this.trees);
+            this.player1.update(this.keys, this.platforms, this.trees, this.texts);
+            this.player2.update(this.keys, this.platforms, this.trees, this.texts);
             
             // Check item collection
             this.checkItemCollection();
@@ -954,6 +972,7 @@ class Game {
         this.blackItems.forEach(item => item.render(this.ctx));
         this.triangles.forEach(triangle => triangle.render(this.ctx));
         this.swamps.forEach(swamp => swamp.render(this.ctx));
+        this.texts.forEach(text => text.render(this.ctx));
         
         // Render players (only if not game over)
         if (!this.gameOver) {
@@ -1080,10 +1099,10 @@ class Unicorn {
         this.groundLevel = (720 - 10) - this.height; // Unicorn's Y position when bottom touches ground
     }
     
-    update(keys, platforms, trees) {
+    update(keys, platforms, trees, texts) {
         this.handleInput(keys);
         this.updatePhysics();
-        this.handleCollisions(platforms, trees);
+        this.handleCollisions(platforms, trees, texts);
         this.updateAnimationState();
         this.updateAnimation();
     }
@@ -1151,7 +1170,7 @@ class Unicorn {
         if (this.x > 1280 - this.width) this.x = 1280 - this.width;
     }
     
-    handleCollisions(platforms, trees) {
+    handleCollisions(platforms, trees, texts) {
         // Start by checking ground collision
         let onGroundThisFrame = this.y >= this.groundLevel;
         this.climbingPlatform = null;
@@ -1221,7 +1240,41 @@ class Unicorn {
             }
         });
         
-        // Update onGround state (after both platforms and trees)
+        // Text collisions (only if canStandOn is true)
+        if (texts) {
+            texts.forEach(text => {
+                if (text.canStandOn) {
+                    const playerBottom = this.y + this.height;
+                    const playerLeft = this.x;
+                    const playerRight = this.x + this.width;
+                    const textTop = text.y - text.height; // Text renders from baseline
+                    const textLeft = text.x;
+                    const textRight = text.x + text.width;
+                    
+                    // Check horizontal overlap first
+                    const overlapLeft = Math.max(playerLeft, textLeft);
+                    const overlapRight = Math.min(playerRight, textRight);
+                    const overlapWidth = overlapRight - overlapLeft;
+                    
+                    if (overlapWidth > 0) {
+                        // Predictive collision: check if unicorn will cross text top in next frame
+                        const nextPlayerBottom = playerBottom + this.velocityY;
+                        
+                        // If unicorn is above text and will cross it, or is very close to it
+                        if (this.velocityY > 0 && 
+                            playerBottom <= textTop && 
+                            nextPlayerBottom >= textTop - 5) {
+                            
+                            this.y = textTop - this.height;
+                            this.velocityY = 0;
+                            onGroundThisFrame = true;
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update onGround state (after platforms, trees, and texts)
         this.onGround = onGroundThisFrame;
     }
     
@@ -1598,6 +1651,35 @@ class GlitterParticle {
             ctx.fillStyle = `rgb(${this.color[0]}, ${this.color[1]}, ${this.color[2]})`;
             ctx.fillRect(this.x, this.y, this.size, this.size);
         }
+        
+        ctx.restore();
+    }
+}
+
+// Text class
+class Text {
+    constructor(x, y, text, fontSize, textColor, canStandOn) {
+        this.x = x;
+        this.y = y;
+        this.text = text;
+        this.fontSize = fontSize;
+        this.textColor = textColor;
+        this.canStandOn = canStandOn;
+        this.width = text.length * (fontSize * 0.6); // Approximate width
+        this.height = fontSize; // Height is font size
+    }
+    
+    render(ctx) {
+        ctx.save();
+        ctx.fillStyle = `rgb(${this.textColor[0]}, ${this.textColor[1]}, ${this.textColor[2]})`;
+        ctx.font = `${this.fontSize}px monospace`;
+        ctx.textAlign = 'left';
+        
+        // Draw text with outline for better visibility
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.strokeText(this.text, this.x, this.y);
+        ctx.fillText(this.text, this.x, this.y);
         
         ctx.restore();
     }
