@@ -145,6 +145,17 @@ class Game {
         }
         
         this.gameLoop();
+        
+        // Initialize music indicator
+        this.updateMusicIndicator();
+    }
+    
+    updateMusicIndicator() {
+        const musicStatus = document.getElementById('musicStatus');
+        if (musicStatus) {
+            musicStatus.textContent = this.musicMuted ? 'OFF' : 'ON';
+            musicStatus.style.color = this.musicMuted ? '#666' : '#fff';
+        }
     }
     
     setupInput() {
@@ -341,6 +352,9 @@ class Game {
         } else {
             this.playMusic();
         }
+        
+        // Update HTML music indicator
+        this.updateMusicIndicator();
     }
     
     parseURLParams() {
@@ -921,12 +935,6 @@ class Game {
         
         // Draw background clouds
         this.renderBackgroundClouds();
-        
-        // Music indicator
-        this.ctx.fillStyle = '#fff';
-        this.ctx.font = '18px monospace';
-        this.ctx.textAlign = 'right';
-        this.ctx.fillText(`Music: ${this.musicMuted ? 'OFF' : 'ON'} (Press M)`, this.width - 20, 30);
     }
     
     renderBackgroundClouds() {
@@ -996,22 +1004,20 @@ class Game {
         this.ctx.lineTo(this.width, this.height - 10);
         this.ctx.stroke();
         
-        // Score display
+        // Score display - Player 2 (black unicorn) on left, Player 1 (white unicorn) on right
         this.ctx.fillStyle = '#fff';
         this.ctx.font = '24px monospace';
         this.ctx.textAlign = 'left';
-        this.ctx.fillText(`Player 1: ${this.player1Score}`, 20, 40);
-        this.ctx.fillText(`Player 2: ${this.player2Score}`, 200, 40);
+        this.ctx.fillText(`Player 2: ${this.player2Score}`, 20, 40);
         
-        // Level display
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText(`Level ${this.currentLevel}`, this.width / 2, 40);
-        
-        // Music indicator
         this.ctx.textAlign = 'right';
-        this.ctx.font = '18px monospace';
-        this.ctx.fillStyle = this.musicMuted ? '#666' : '#fff';
-        this.ctx.fillText(`Music: ${this.musicMuted ? 'OFF' : 'ON'} (M)`, this.width - 20, 30);
+        this.ctx.fillText(`Player 1: ${this.player1Score}`, this.width - 20, 40);
+        
+        // Level display - center with multi-line support
+        this.ctx.textAlign = 'center';
+        const levelName = this.levelData?.level?.name || `Level ${this.currentLevel}`;
+        this.drawMultilineText(levelName, this.width / 2, 30, 24, this.width - 300);
+        
         
         // Level complete message
         if (this.levelComplete) {
@@ -1052,6 +1058,41 @@ class Game {
         this.ctx.font = '24px monospace';
         this.ctx.fillText('Restarting level...', this.width / 2, this.height / 2 + 70);
         this.ctx.fillText('Press R to restart now', this.width / 2, this.height / 2 + 100);
+    }
+    
+    drawMultilineText(text, x, y, fontSize, maxWidth) {
+        this.ctx.font = `${fontSize}px monospace`;
+        this.ctx.fillStyle = '#fff';
+        
+        // Split text into words
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = '';
+        
+        for (let i = 0; i < words.length; i++) {
+            const testLine = currentLine + (currentLine ? ' ' : '') + words[i];
+            const metrics = this.ctx.measureText(testLine);
+            
+            if (metrics.width > maxWidth && currentLine) {
+                lines.push(currentLine);
+                currentLine = words[i];
+            } else {
+                currentLine = testLine;
+            }
+        }
+        
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+        
+        // Draw each line
+        const lineHeight = fontSize + 4;
+        const totalHeight = lines.length * lineHeight;
+        const startY = y - (totalHeight / 2) + (fontSize / 2);
+        
+        for (let i = 0; i < lines.length; i++) {
+            this.ctx.fillText(lines[i], x, startY + (i * lineHeight));
+        }
     }
     
     gameLoop() {

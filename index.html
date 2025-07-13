@@ -16,6 +16,12 @@
             font-family: monospace;
         }
         
+        #mainContainer {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+        
         #gameContainer {
             background: #222;
             border: 2px solid #444;
@@ -23,6 +29,61 @@
             flex-direction: column;
             align-items: center;
             padding: 20px;
+        }
+        
+        #sidePanel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background: #333;
+            border: 2px solid #444;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        #sidePanel h3 {
+            color: #fff;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        #sidePanel a {
+            display: block;
+            text-decoration: none;
+            padding: 8px 16px;
+            margin: 5px 0;
+            border-radius: 5px;
+            background: #555;
+            color: #fff;
+            transition: background 0.3s;
+            text-align: center;
+            min-width: 120px;
+        }
+        
+        #sidePanel a:hover {
+            background: #666;
+        }
+        
+        #musicIndicator {
+            color: #fff;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        #gameTitle {
+            text-align: center;
+            color: #fff;
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         #gameCanvas {
@@ -142,23 +203,31 @@
             </div>
         </div>
     </div>
-    <div id="gameContainer">
-        <canvas id="gameCanvas" width="1280" height="720"></canvas>
-        <div id="controls">
-            <div class="control-section">
-                <div class="player1">Player 1: Arrow Keys to move, Up to jump/climb</div>
+    <div id="gameTitle">🦄 Lily's Unicorns 🦄</div>
+    <div id="mainContainer">
+        <div id="gameContainer">
+            <canvas id="gameCanvas" width="1280" height="720"></canvas>
+            <div id="controls">
+                <div class="control-section">
+                    <div class="player1">Player 1: Arrow Keys to move, Up to jump/climb</div>
+                </div>
+                <div class="control-section">
+                    <div class="player2">Player 2: WASD to move, W to jump/climb</div>
+                </div>
+                <div class="control-section">
+                    <div>R: Reset | N: Next Level | ESC: Menu | F5: Reload Level JSON</div>
+                </div>
+                <div id="musicIndicator">
+                    Music: <span id="musicStatus">ON</span> (Press M to toggle)
+                </div>
             </div>
-            <div class="control-section">
-                <div class="player2">Player 2: WASD to move, W to jump/climb</div>
-            </div>
-            <div class="control-section">
-                <div>R: Reset | N: Next Level | ESC: Menu | F5: Reload Level JSON</div>
-            </div>
-            <div class="control-section" style="margin-top: 15px;">
-                <a href="level-map.html" style="color: #FFD700; text-decoration: none; margin: 0 15px;">🗺️ Level Map</a>
-                <a href="level-editor.html" style="color: #4ecdc4; text-decoration: none; margin: 0 15px;">🛠️ Level Editor</a>
-                <a href="credits.html" style="color: #ff6b6b; text-decoration: none; margin: 0 15px;">📜 Credits</a>
-            </div>
+        </div>
+        
+        <div id="sidePanel">
+            <h3>Navigation</h3>
+            <a href="level-map.html">🗺️ Level Map</a>
+            <a href="level-editor.html">🛠️ Level Editor</a>
+            <a href="credits.html">📜 Credits</a>
         </div>
     </div>
     <script src="levels-data.js"></script>

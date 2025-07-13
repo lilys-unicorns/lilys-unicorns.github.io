@@ -385,12 +385,14 @@
                 this.selectedLevel = this.currentLevel;
                 this.levelPositions = {};
                 this.connections = [];
+                this.levelNames = {}; // Cache for level names
                 
                 this.init();
             }
             
             async init() {
                 await this.detectMaxLevels();
+                await this.loadLevelNames();
                 this.generateLevelPositions();
                 this.createConnections();
                 this.renderMap();
@@ -469,6 +471,22 @@
                     this.maxLevels = Math.max(...existingLevels);
                     console.log(`Detected ${existingLevels.length} levels, max level: ${this.maxLevels}`);
                     console.log('Available levels:', existingLevels);
+                }
+            }
+            
+            async loadLevelNames() {
+                // Load level names from JSON files
+                for (let level = 1; level <= this.maxLevels; level++) {
+                    try {
+                        const levelData = await this.loadLevelData(level);
+                        if (levelData && levelData.level && levelData.level.name) {
+                            this.levelNames[level] = levelData.level.name;
+                        } else {
+                            this.levelNames[level] = `Level ${level}`;
+                        }
+                    } catch (error) {
+                        this.levelNames[level] = `Level ${level}`;
+                    }
                 }
             }
             
@@ -666,7 +684,7 @@
                 
                 // Update title with score status
                 const levelScore = ProgressManager.getLevelScore(level);
-                let titleText = `Level ${level}`;
+                let titleText = this.levelNames[level] || `Level ${level}`;
                 
                 if (levelScore === true) {
                     titleText += ' 💜 Perfect!';
@@ -780,7 +798,7 @@
                     const previewTitle = document.getElementById('previewTitle');
                     const canvas = document.getElementById('previewCanvas');
                     
-                    previewTitle.textContent = `Level ${level}`;
+                    previewTitle.textContent = this.levelNames[level] || `Level ${level}`;
                     
                     // Render level preview
                     this.renderLevelPreview(canvas, levelData);
