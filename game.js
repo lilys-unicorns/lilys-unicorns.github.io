@@ -622,8 +622,8 @@ class Game {
     update() {
         if (this.gameState === 'PLAYING' && this.player1 && this.player2) {
             // Update players
-            this.player1.update(this.keys, this.platforms, this.trees, this.texts);
-            this.player2.update(this.keys, this.platforms, this.trees, this.texts);
+            this.player1.update(this.keys, this.platforms, this.trees, this.texts, this.levelComplete, this.gameOver);
+            this.player2.update(this.keys, this.platforms, this.trees, this.texts, this.levelComplete, this.gameOver);
             
             // Handle cross-unicorn bubble communication
             this.updateBubbleCommunication();
@@ -905,24 +905,35 @@ class Game {
     }
     
     updateBubbleCommunication() {
-        // Check if player1 is idle for 3+ seconds, then player2 should show talking bubble
-        if (this.player1.idleTimer >= 180 && !this.player1.showTalkingBubble) {
+        // Don't show bubbles if level is complete or game is over
+        if (this.levelComplete || this.gameOver) {
+            this.player1.showThinkingBubble = false;
+            this.player1.showTalkingBubble = false;
+            this.player1.talkingText = '';
+            this.player2.showThinkingBubble = false;
+            this.player2.showTalkingBubble = false;
+            this.player2.talkingText = '';
+            return;
+        }
+        
+        // Check if player1 is idle for 5+ seconds, then player2 should show talking bubble
+        if (this.player1.idleTimer >= 300 && !this.player1.showTalkingBubble) {
             this.player2.showTalkingBubble = true;
             if (!this.player2.talkingText) {
                 this.player2.talkingText = this.player2.bubbleMessages[Math.floor(Math.random() * this.player2.bubbleMessages.length)];
             }
-        } else if (this.player1.idleTimer < 180) {
+        } else if (this.player1.idleTimer < 300) {
             this.player2.showTalkingBubble = false;
             this.player2.talkingText = '';
         }
         
-        // Check if player2 is idle for 3+ seconds, then player1 should show talking bubble
-        if (this.player2.idleTimer >= 180 && !this.player2.showTalkingBubble) {
+        // Check if player2 is idle for 5+ seconds, then player1 should show talking bubble
+        if (this.player2.idleTimer >= 300 && !this.player2.showTalkingBubble) {
             this.player1.showTalkingBubble = true;
             if (!this.player1.talkingText) {
                 this.player1.talkingText = this.player1.bubbleMessages[Math.floor(Math.random() * this.player1.bubbleMessages.length)];
             }
-        } else if (this.player2.idleTimer < 180) {
+        } else if (this.player2.idleTimer < 300) {
             this.player1.showTalkingBubble = false;
             this.player1.talkingText = '';
         }
@@ -1186,13 +1197,13 @@ class Unicorn {
         this.groundLevel = (720 - 10) - this.height; // Unicorn's Y position when bottom touches ground
     }
     
-    update(keys, platforms, trees, texts) {
+    update(keys, platforms, trees, texts, levelComplete = false, gameOver = false) {
         this.handleInput(keys);
         this.updatePhysics();
         this.handleCollisions(platforms, trees, texts);
         this.updateAnimationState();
         this.updateAnimation();
-        this.updateBubbles();
+        this.updateBubbles(levelComplete, gameOver);
     }
     
     handleInput(keys) {
@@ -1411,15 +1422,21 @@ class Unicorn {
         }
     }
     
-    updateBubbles() {
+    updateBubbles(levelComplete = false, gameOver = false) {
+        // Don't show thinking bubbles if level is complete or game is over
+        if (levelComplete || gameOver) {
+            this.showThinkingBubble = false;
+            return;
+        }
+        
         // Check if unicorn is idle (not moving)
         const isIdle = Math.abs(this.velocityX) < 0.1 && this.onGround;
         
         if (isIdle) {
             this.idleTimer++;
             
-            // Show thinking bubble after 1 second (60 FPS = 60 frames)
-            if (this.idleTimer >= 60) {
+            // Show thinking bubble after 2 seconds (60 FPS = 120 frames)
+            if (this.idleTimer >= 120) {
                 this.showThinkingBubble = true;
             }
             
