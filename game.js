@@ -103,11 +103,21 @@ class Game {
         this.init();
     }
     
-    init() {
+    async init() {
         this.setupInput();
         this.loadSprite();
         this.loadMusic();
-        this.detectMaxLevels();
+        await this.detectMaxLevels();
+        
+        // Check if a level parameter is provided in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const levelParam = urlParams.get('level');
+        
+        if (levelParam) {
+            // Direct level access - bypass menu and start game
+            this.startGame();
+        }
+        
         this.gameLoop();
     }
     
@@ -157,7 +167,7 @@ class Game {
                 this.menuSelection = (this.menuSelection + 1) % this.menuOptions.length;
             } else if (key === 'Enter') {
                 if (this.menuSelection === 0) { // PLAY
-                    this.startGame();
+                    window.location.href = 'level-map.html';
                 } else if (this.menuSelection === 1) { // CREDITS
                     window.open('credits.html', '_blank');
                 } else { // EXIT

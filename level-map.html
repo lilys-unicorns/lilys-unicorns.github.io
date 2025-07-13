@@ -611,11 +611,8 @@
         }
         
         function goBack() {
-            if (document.referrer && document.referrer.includes('lily_unicorns')) {
-                window.history.back();
-            } else {
-                window.location.href = 'index.html';
-            }
+            // Always go back to main menu (no level parameter) when using back button
+            window.location.href = 'index.html';
         }
         
         function resetProgress() {
