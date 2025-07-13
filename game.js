@@ -1335,14 +1335,16 @@ class Unicorn {
             }
         });
         
-        // Text collisions (only if canStandOn is true)
+        // Text collisions (only if canStandOn is true) - exactly like platform collision
         if (texts) {
             texts.forEach(text => {
                 if (text.canStandOn) {
                     const playerBottom = this.y + this.height;
                     const playerLeft = this.x;
                     const playerRight = this.x + this.width;
-                    const textTop = text.y - text.height; // Text renders from baseline
+                    // text.y is the baseline, so the top of most letters is baseline - (fontSize * 0.6)
+                    // This gives a more natural "standing on top of text" appearance
+                    const textTop = text.y - (text.fontSize * 0.6);
                     const textLeft = text.x;
                     const textRight = text.x + text.width;
                     
@@ -1355,10 +1357,12 @@ class Unicorn {
                         // Predictive collision: check if unicorn will cross text top in next frame
                         const nextPlayerBottom = playerBottom + this.velocityY;
                         
-                        // If unicorn is above text and will cross it, or is very close to it
-                        if (this.velocityY > 0 && 
+                        // If unicorn is above text top and will cross it, or is very close to it
+                        // Also allow collision when player is very close to text top (for standing on it)
+                        if ((this.velocityY > 0 && 
                             playerBottom <= textTop && 
-                            nextPlayerBottom >= textTop - 5) {
+                            nextPlayerBottom >= textTop - 5) ||
+                            (Math.abs(playerBottom - textTop) <= 5 && this.velocityY >= 0)) {
                             
                             this.y = textTop - this.height;
                             this.velocityY = 0;
@@ -1879,8 +1883,10 @@ class Text {
         this.fontSize = fontSize;
         this.textColor = textColor;
         this.canStandOn = canStandOn;
-        this.width = text.length * (fontSize * 0.6); // Approximate width
+        // Better width calculation for monospace font
+        this.width = text.length * (fontSize * 0.6);
         this.height = fontSize; // Height is font size
+        
     }
     
     render(ctx) {
