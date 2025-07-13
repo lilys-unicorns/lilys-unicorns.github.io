@@ -227,7 +227,7 @@
             top: 400px;
             left: 20px;
             width: 250px;
-            height: 180px;
+            height: 210px;
             background: rgba(255, 255, 255, 0.95);
             border: 2px solid #4A90E2;
             border-radius: 8px;
@@ -238,6 +238,8 @@
             transition: opacity 0.2s ease;
             padding: 8px;
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
         }
         
         .level-preview.show {
@@ -250,6 +252,7 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             background: #87CEEB;
+            flex-shrink: 0;
         }
         
         .level-preview-title {
@@ -258,6 +261,14 @@
             color: #333;
             text-align: center;
             margin-bottom: 4px;
+            line-height: 1.2;
+            max-height: 36px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            word-wrap: break-word;
+            flex-shrink: 0;
         }
         
         @media (max-width: 768px) {
