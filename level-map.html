@@ -400,78 +400,70 @@
             }
             
             async detectMaxLevels() {
-                // Try to detect available levels with extended range and better detection
-                let levelNumber = 1;
-                let consecutiveFailures = 0;
-                const maxConsecutiveFailures = 5; // Allow gaps in level numbering
+                // Initialize with embedded data levels if available
+                this.availableLevels = [];
                 
-                while (levelNumber <= 100 && consecutiveFailures < maxConsecutiveFailures) {
+                if (typeof LEVEL_DATA !== 'undefined') {
+                    const embeddedLevels = Object.keys(LEVEL_DATA).map(k => parseInt(k)).filter(n => !isNaN(n));
+                    this.availableLevels = [...embeddedLevels];
+                }
+                
+                // Use a smart scanning approach that minimizes 404s
+                this.availableLevels = await this.scanForLevels();
+                
+                // Sort and set max level
+                this.availableLevels.sort((a, b) => a - b);
+                this.maxLevels = this.availableLevels.length > 0 ? Math.max(...this.availableLevels) : 1;
+                
+                console.log(`Level map detected available levels: [${this.availableLevels.join(', ')}]`);
+                console.log(`Max level: ${this.maxLevels}`);
+            }
+            
+            async scanForLevels() {
+                const foundLevels = new Set();
+                
+                // Add any embedded levels first
+                if (typeof LEVEL_DATA !== 'undefined') {
+                    const embeddedLevels = Object.keys(LEVEL_DATA).map(k => parseInt(k)).filter(n => !isNaN(n));
+                    embeddedLevels.forEach(level => foundLevels.add(level));
+                }
+                
+                // Scan systematically with minimal requests
+                // Check levels 1-50 in batches to find existing ones efficiently
+                let consecutiveNotFound = 0;
+                const maxConsecutiveNotFound = 3;
+                
+                for (let level = 1; level <= 50; level++) {
                     try {
-                        const response = await fetch(`levels/level${levelNumber}.json`, {
+                        const response = await fetch(`levels/level${level}.json`, {
+                            method: 'HEAD',
                             cache: 'no-store',
                             headers: { 'Cache-Control': 'no-cache' }
                         });
                         
                         if (response.ok) {
-                            // Reset failure counter on success
-                            consecutiveFailures = 0;
-                            levelNumber++;
+                            foundLevels.add(level);
+                            consecutiveNotFound = 0;
                         } else {
-                            // Check embedded data as fallback
-                            if (typeof LEVEL_DATA !== 'undefined' && LEVEL_DATA[levelNumber]) {
-                                consecutiveFailures = 0;
-                                levelNumber++;
-                            } else {
-                                consecutiveFailures++;
-                                levelNumber++;
+                            consecutiveNotFound++;
+                            // If we haven't found anything in a while and we have some levels, stop
+                            if (consecutiveNotFound >= maxConsecutiveNotFound && foundLevels.size > 0) {
+                                break;
                             }
                         }
                     } catch (error) {
-                        // Check embedded data as fallback
-                        if (typeof LEVEL_DATA !== 'undefined' && LEVEL_DATA[levelNumber]) {
-                            consecutiveFailures = 0;
-                            levelNumber++;
-                        } else {
-                            consecutiveFailures++;
-                            levelNumber++;
+                        consecutiveNotFound++;
+                        // If we haven't found anything in a while and we have some levels, stop
+                        if (consecutiveNotFound >= maxConsecutiveNotFound && foundLevels.size > 0) {
+                            break;
                         }
                     }
+                    
+                    // Add a small delay to be gentle on the server
+                    await new Promise(resolve => setTimeout(resolve, 10));
                 }
                 
-                // The actual max level is the last successful level found
-                this.maxLevels = Math.max(levelNumber - consecutiveFailures - 1, 4);
-                
-                // Also try to verify by checking directory listing if possible
-                this.verifyLevelsExist();
-            }
-            
-            async verifyLevelsExist() {
-                // Try to get a more accurate count by checking which levels actually exist
-                const existingLevels = [];
-                
-                for (let i = 1; i <= this.maxLevels + 10; i++) {
-                    try {
-                        const response = await fetch(`levels/level${i}.json`, {
-                            method: 'HEAD', // Just check if file exists
-                            cache: 'no-store'
-                        });
-                        
-                        if (response.ok) {
-                            existingLevels.push(i);
-                        }
-                    } catch (error) {
-                        // Check embedded data
-                        if (typeof LEVEL_DATA !== 'undefined' && LEVEL_DATA[i]) {
-                            existingLevels.push(i);
-                        }
-                    }
-                }
-                
-                if (existingLevels.length > 0) {
-                    this.maxLevels = Math.max(...existingLevels);
-                    console.log(`Detected ${existingLevels.length} levels, max level: ${this.maxLevels}`);
-                    console.log('Available levels:', existingLevels);
-                }
+                return Array.from(foundLevels);
             }
             
             async loadLevelNames() {

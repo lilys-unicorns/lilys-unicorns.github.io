@@ -281,47 +281,71 @@ class Game {
     }
     
     async detectMaxLevels() {
-        this.maxLevels = 4; // Default fallback
+        // Initialize with embedded data levels if available
+        this.availableLevels = [];
         
-        // Try to detect levels with extended range and better detection
-        let levelNumber = 1;
-        let consecutiveFailures = 0;
-        const maxConsecutiveFailures = 5; // Allow gaps in level numbering
+        if (typeof LEVEL_DATA !== 'undefined') {
+            const embeddedLevels = Object.keys(LEVEL_DATA).map(k => parseInt(k)).filter(n => !isNaN(n));
+            this.availableLevels = [...embeddedLevels];
+        }
         
-        while (levelNumber <= 100 && consecutiveFailures < maxConsecutiveFailures) {
+        // Use a smart scanning approach that minimizes 404s
+        // Start with a reasonable scan range and use exponential backoff
+        this.availableLevels = await this.scanForLevels();
+        
+        // Sort and set max level
+        this.availableLevels.sort((a, b) => a - b);
+        this.maxLevels = this.availableLevels.length > 0 ? Math.max(...this.availableLevels) : 1;
+        
+        console.log(`Game detected available levels: [${this.availableLevels.join(', ')}]`);
+        console.log(`Max level: ${this.maxLevels}`);
+    }
+    
+    async scanForLevels() {
+        const foundLevels = new Set();
+        
+        // Add any embedded levels first
+        if (typeof LEVEL_DATA !== 'undefined') {
+            const embeddedLevels = Object.keys(LEVEL_DATA).map(k => parseInt(k)).filter(n => !isNaN(n));
+            embeddedLevels.forEach(level => foundLevels.add(level));
+        }
+        
+        // Scan systematically with minimal requests
+        // Check levels 1-50 in batches to find existing ones efficiently
+        let consecutiveNotFound = 0;
+        const maxConsecutiveNotFound = 3;
+        
+        for (let level = 1; level <= 50; level++) {
             try {
-                const response = await fetch(`levels/level${levelNumber}.json`, {
+                const response = await fetch(`levels/level${level}.json`, {
+                    method: 'HEAD',
                     cache: 'no-store',
                     headers: { 'Cache-Control': 'no-cache' }
                 });
                 
                 if (response.ok) {
-                    consecutiveFailures = 0;
-                    levelNumber++;
+                    foundLevels.add(level);
+                    consecutiveNotFound = 0;
                 } else {
-                    // Check embedded data as fallback
-                    if (typeof LEVEL_DATA !== 'undefined' && LEVEL_DATA[levelNumber]) {
-                        consecutiveFailures = 0;
-                        levelNumber++;
-                    } else {
-                        consecutiveFailures++;
-                        levelNumber++;
+                    consecutiveNotFound++;
+                    // If we haven't found anything in a while and we have some levels, stop
+                    if (consecutiveNotFound >= maxConsecutiveNotFound && foundLevels.size > 0) {
+                        break;
                     }
                 }
             } catch (error) {
-                // Check embedded data as fallback
-                if (typeof LEVEL_DATA !== 'undefined' && LEVEL_DATA[levelNumber]) {
-                    consecutiveFailures = 0;
-                    levelNumber++;
-                } else {
-                    consecutiveFailures++;
-                    levelNumber++;
+                consecutiveNotFound++;
+                // If we haven't found anything in a while and we have some levels, stop
+                if (consecutiveNotFound >= maxConsecutiveNotFound && foundLevels.size > 0) {
+                    break;
                 }
             }
+            
+            // Add a small delay to be gentle on the server
+            await new Promise(resolve => setTimeout(resolve, 10));
         }
         
-        this.maxLevels = Math.max(levelNumber - consecutiveFailures - 1, 4);
-        console.log(`Game detected max levels: ${this.maxLevels}`);
+        return Array.from(foundLevels);
     }
     
     playMusic() {
