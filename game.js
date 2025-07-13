@@ -18,8 +18,16 @@ class ProgressManager {
         }
     }
     
-    static completeLevel(level) {
+    static completeLevel(level, perfectScore = false) {
         const progress = this.getProgress();
+        
+        // Initialize level scores if not exists
+        if (!progress.levelScores) {
+            progress.levelScores = {};
+        }
+        
+        // Update level score (perfect = true, incomplete = false)
+        progress.levelScores[level] = perfectScore;
         
         // Add to completed levels if not already there
         if (!progress.completedLevels.includes(level)) {
@@ -46,8 +54,21 @@ class ProgressManager {
         return this.getCompletedLevels().includes(level);
     }
     
+    static isLevelPerfect(level) {
+        const progress = this.getProgress();
+        return progress.levelScores && progress.levelScores[level] === true;
+    }
+    
+    static getLevelScore(level) {
+        const progress = this.getProgress();
+        if (!progress.levelScores || progress.levelScores[level] === undefined) {
+            return null; // Not completed yet
+        }
+        return progress.levelScores[level]; // true for perfect, false for incomplete
+    }
+    
     static resetProgress() {
-        this.saveProgress({ completedLevels: [], currentLevel: 1 });
+        this.saveProgress({ completedLevels: [], currentLevel: 1, levelScores: {} });
     }
 }
 
@@ -92,6 +113,8 @@ class Game {
         // Scoring
         this.player1Score = 0;
         this.player2Score = 0;
+        this.totalWhiteItems = 0;
+        this.totalBlackItems = 0;
         
         // Input handling
         this.keys = {};
@@ -431,6 +454,10 @@ class Game {
         this.whiteItems = [];
         this.blackItems = [];
         
+        // Track total items for perfect score calculation
+        this.totalWhiteItems = this.levelData.white_items ? this.levelData.white_items.length : 0;
+        this.totalBlackItems = this.levelData.black_items ? this.levelData.black_items.length : 0;
+        
         if (this.levelData.white_items) {
             this.levelData.white_items.forEach(item => {
                 this.whiteItems.push(new Item(
@@ -645,8 +672,13 @@ class Game {
                 this.levelComplete = true;
                 this.createGlitterExplosion();
                 
+                // Check if all items were collected (perfect score)
+                const collectedAllWhite = this.player1Score === this.totalWhiteItems;
+                const collectedAllBlack = this.player2Score === this.totalBlackItems;
+                const perfectScore = collectedAllWhite && collectedAllBlack;
+                
                 // Save progress when level is completed
-                ProgressManager.completeLevel(this.currentLevel);
+                ProgressManager.completeLevel(this.currentLevel, perfectScore);
             }
         }
     }
