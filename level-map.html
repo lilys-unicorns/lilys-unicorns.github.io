@@ -26,22 +26,23 @@
         
         .map-canvas {
             position: relative;
-            width: 900px;
-            height: 700px;
+            width: 800px;
+            height: 600px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
+            overflow: hidden;
         }
         
         .diamond {
             position: absolute;
-            width: 60px;
-            height: 60px;
+            width: 36px;
+            height: 36px;
             background: linear-gradient(45deg, #FFD700, #FFA500);
             transform: rotate(45deg);
-            border: 3px solid #fff;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 2px solid #fff;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
@@ -75,7 +76,7 @@
         }
         
         .diamond.current {
-            background: linear-gradient(45deg, #ff6b6b, #e74c3c);
+            background: linear-gradient(45deg, #4CAF50, #45a049);
             animation: pulse 2s infinite;
         }
         
@@ -101,10 +102,11 @@
         
         .connection-line {
             position: absolute;
-            height: 2px;
-            background: linear-gradient(90deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.3));
+            height: 3px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.4));
             z-index: 1;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            border-radius: 2px;
         }
         
         .title {
@@ -213,10 +215,10 @@
         }
         
         .legend-diamond {
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             transform: rotate(45deg);
-            margin-right: 10px;
+            margin-right: 12px;
             border: 1px solid #333;
         }
         
@@ -252,7 +254,7 @@
         <div class="legend">
             <h4 style="margin-top: 0; color: #333;">Legend:</h4>
             <div class="legend-item">
-                <div class="legend-diamond" style="background: linear-gradient(45deg, #ff6b6b, #e74c3c);"></div>
+                <div class="legend-diamond" style="background: linear-gradient(45deg, #4CAF50, #45a049); animation: pulse 2s infinite;"></div>
                 <span>Current Level</span>
             </div>
             <div class="legend-item">
@@ -262,14 +264,6 @@
             <div class="legend-item">
                 <div class="legend-diamond" style="background: linear-gradient(45deg, #FF9800, #F57C00);"></div>
                 <span>Incomplete (🧡)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-diamond" style="background: linear-gradient(45deg, #4CAF50, #45a049);"></div>
-                <span>Completed</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-diamond" style="background: linear-gradient(45deg, #FFD700, #FFA500);"></div>
-                <span>Available</span>
             </div>
             <div class="legend-item">
                 <div class="legend-diamond" style="background: linear-gradient(45deg, #999, #666);"></div>
@@ -361,9 +355,12 @@
             }
             
             async detectMaxLevels() {
-                // Try to detect available levels
+                // Try to detect available levels with extended range and better detection
                 let levelNumber = 1;
-                while (levelNumber <= 20) { // Extended detection range
+                let consecutiveFailures = 0;
+                const maxConsecutiveFailures = 5; // Allow gaps in level numbering
+                
+                while (levelNumber <= 100 && consecutiveFailures < maxConsecutiveFailures) {
                     try {
                         const response = await fetch(`levels/level${levelNumber}.json`, {
                             cache: 'no-store',
@@ -371,94 +368,128 @@
                         });
                         
                         if (response.ok) {
+                            // Reset failure counter on success
+                            consecutiveFailures = 0;
                             levelNumber++;
                         } else {
-                            break;
+                            // Check embedded data as fallback
+                            if (typeof LEVEL_DATA !== 'undefined' && LEVEL_DATA[levelNumber]) {
+                                consecutiveFailures = 0;
+                                levelNumber++;
+                            } else {
+                                consecutiveFailures++;
+                                levelNumber++;
+                            }
                         }
                     } catch (error) {
                         // Check embedded data as fallback
                         if (typeof LEVEL_DATA !== 'undefined' && LEVEL_DATA[levelNumber]) {
+                            consecutiveFailures = 0;
                             levelNumber++;
                         } else {
-                            break;
+                            consecutiveFailures++;
+                            levelNumber++;
                         }
                     }
                 }
                 
-                this.maxLevels = Math.max(levelNumber - 1, 4); // Minimum 4 levels
+                // The actual max level is the last successful level found
+                this.maxLevels = Math.max(levelNumber - consecutiveFailures - 1, 4);
+                
+                // Also try to verify by checking directory listing if possible
+                this.verifyLevelsExist();
+            }
+            
+            async verifyLevelsExist() {
+                // Try to get a more accurate count by checking which levels actually exist
+                const existingLevels = [];
+                
+                for (let i = 1; i <= this.maxLevels + 10; i++) {
+                    try {
+                        const response = await fetch(`levels/level${i}.json`, {
+                            method: 'HEAD', // Just check if file exists
+                            cache: 'no-store'
+                        });
+                        
+                        if (response.ok) {
+                            existingLevels.push(i);
+                        }
+                    } catch (error) {
+                        // Check embedded data
+                        if (typeof LEVEL_DATA !== 'undefined' && LEVEL_DATA[i]) {
+                            existingLevels.push(i);
+                        }
+                    }
+                }
+                
+                if (existingLevels.length > 0) {
+                    this.maxLevels = Math.max(...existingLevels);
+                    console.log(`Detected ${existingLevels.length} levels, max level: ${this.maxLevels}`);
+                    console.log('Available levels:', existingLevels);
+                }
             }
             
             generateLevelPositions() {
-                const centerX = 450;
-                const centerY = 350;
-                const baseRadius = 120;
+                // Create a winding path layout like a game board
+                const pathPoints = this.generatePathPoints();
                 
-                // Level 1 at center
-                this.levelPositions[1] = { x: centerX, y: centerY };
-                
-                // Calculate positions based on connection pattern
-                for (let level = 2; level <= this.maxLevels; level++) {
-                    const parent = this.getParentLevel(level);
-                    const parentPos = this.levelPositions[parent];
-                    
-                    if (parentPos) {
-                        const childIndex = this.getChildIndex(level, parent);
-                        const angle = this.getChildAngle(childIndex, parent);
-                        const distance = this.getDistanceFromCenter(level);
-                        
-                        this.levelPositions[level] = {
-                            x: parentPos.x + Math.cos(angle) * distance,
-                            y: parentPos.y + Math.sin(angle) * distance
-                        };
+                for (let level = 1; level <= this.maxLevels; level++) {
+                    if (pathPoints[level - 1]) {
+                        this.levelPositions[level] = pathPoints[level - 1];
                     }
                 }
             }
             
-            getParentLevel(level) {
-                if (level <= 10) return 1;
+            generatePathPoints() {
+                const points = [];
+                const margin = 80;
+                const canvasWidth = 800;
+                const canvasHeight = 600;
+                const spacing = 90;
                 
-                // Level 11+ connects to level (level-10)
-                // e.g., level 11 -> level 1, level 12 -> level 2, etc.
-                const baseLevel = ((level - 11) % 10) + 1;
-                return Math.min(baseLevel, this.maxLevels);
-            }
-            
-            getChildIndex(level, parent) {
-                if (parent === 1 && level <= 10) {
-                    return level - 2; // levels 2-10 are children 0-8 of level 1
+                // Create a winding path that fills the canvas nicely
+                let x = margin;
+                let y = margin;
+                let direction = 1; // 1 for right, -1 for left
+                let level = 0;
+                
+                while (y < canvasHeight - margin && level < 100) {
+                    // Add points going horizontally
+                    while ((direction === 1 && x < canvasWidth - margin) || 
+                           (direction === -1 && x > margin)) {
+                        points.push({ x, y });
+                        x += spacing * direction;
+                        level++;
+                        
+                        if (level >= 100) break;
+                    }
+                    
+                    // Move to next row
+                    y += spacing;
+                    direction *= -1; // Reverse direction for next row
+                    
+                    // Adjust x position for the new row
+                    if (direction === 1) {
+                        x = margin;
+                    } else {
+                        x = canvasWidth - margin;
+                    }
                 }
                 
-                // For higher levels, calculate based on the pattern
-                return Math.floor((level - 11) / 10);
-            }
-            
-            getChildAngle(childIndex, parent) {
-                if (parent === 1) {
-                    // 9 directions from center (levels 2-10)
-                    return (childIndex * Math.PI * 2 / 9) - (Math.PI / 2);
-                }
-                
-                // For other parents, spread children around them
-                return (childIndex * Math.PI * 2 / 3) - (Math.PI / 2);
-            }
-            
-            getDistanceFromCenter(level) {
-                if (level <= 10) return 120;
-                
-                const generation = Math.floor((level - 11) / 10) + 1;
-                return 120 + (generation * 100);
+                return points;
             }
             
             createConnections() {
                 this.connections = [];
                 
+                // Create connections between consecutive levels
                 for (let level = 2; level <= this.maxLevels; level++) {
-                    const parent = this.getParentLevel(level);
-                    if (this.levelPositions[parent] && this.levelPositions[level]) {
+                    const prevLevel = level - 1;
+                    if (this.levelPositions[prevLevel] && this.levelPositions[level]) {
                         this.connections.push({
-                            from: parent,
+                            from: prevLevel,
                             to: level,
-                            fromPos: this.levelPositions[parent],
+                            fromPos: this.levelPositions[prevLevel],
                             toPos: this.levelPositions[level]
                         });
                     }
@@ -488,12 +519,23 @@
                 
                 const dx = connection.toPos.x - connection.fromPos.x;
                 const dy = connection.toPos.y - connection.fromPos.y;
-                const length = Math.sqrt(dx * dx + dy * dy) - 60; // Subtract diamond size
                 const angle = Math.atan2(dy, dx);
                 
+                // Calculate connection points at diamond edges
+                const diamondRadius = 25; // Approximate radius to edge of rotated diamond
+                const startX = connection.fromPos.x + Math.cos(angle) * diamondRadius;
+                const startY = connection.fromPos.y + Math.sin(angle) * diamondRadius;
+                const endX = connection.toPos.x - Math.cos(angle) * diamondRadius;
+                const endY = connection.toPos.y - Math.sin(angle) * diamondRadius;
+                
+                // Calculate actual line length between diamond edges
+                const actualDx = endX - startX;
+                const actualDy = endY - startY;
+                const length = Math.sqrt(actualDx * actualDx + actualDy * actualDy);
+                
                 line.style.width = `${length}px`;
-                line.style.left = `${connection.fromPos.x + Math.cos(angle) * 30}px`;
-                line.style.top = `${connection.fromPos.y + Math.sin(angle) * 30}px`;
+                line.style.left = `${startX}px`;
+                line.style.top = `${startY}px`;
                 line.style.transform = `rotate(${angle}rad)`;
                 line.style.transformOrigin = 'left center';
                 
@@ -503,8 +545,8 @@
             renderDiamond(level, position) {
                 const diamond = document.createElement('div');
                 diamond.className = 'diamond';
-                diamond.style.left = `${position.x - 30}px`;
-                diamond.style.top = `${position.y - 30}px`;
+                diamond.style.left = `${position.x - 18}px`; // Center the smaller diamond
+                diamond.style.top = `${position.y - 18}px`;
                 diamond.dataset.level = level;
                 
                 // Add status classes based on actual progress

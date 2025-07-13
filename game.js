@@ -269,35 +269,47 @@ class Game {
     }
     
     async detectMaxLevels() {
-        this.maxLevels = 3; // Default fallback
+        this.maxLevels = 4; // Default fallback
         
-        // Try to detect levels by attempting to load level files
+        // Try to detect levels with extended range and better detection
         let levelNumber = 1;
-        while (levelNumber <= 10) { // Reasonable upper limit
+        let consecutiveFailures = 0;
+        const maxConsecutiveFailures = 5; // Allow gaps in level numbering
+        
+        while (levelNumber <= 100 && consecutiveFailures < maxConsecutiveFailures) {
             try {
                 const response = await fetch(`levels/level${levelNumber}.json`, {
                     cache: 'no-store',
-                    headers: {
-                        'Cache-Control': 'no-cache'
-                    }
+                    headers: { 'Cache-Control': 'no-cache' }
                 });
                 
                 if (response.ok) {
+                    consecutiveFailures = 0;
                     levelNumber++;
                 } else {
-                    break;
+                    // Check embedded data as fallback
+                    if (typeof LEVEL_DATA !== 'undefined' && LEVEL_DATA[levelNumber]) {
+                        consecutiveFailures = 0;
+                        levelNumber++;
+                    } else {
+                        consecutiveFailures++;
+                        levelNumber++;
+                    }
                 }
             } catch (error) {
                 // Check embedded data as fallback
                 if (typeof LEVEL_DATA !== 'undefined' && LEVEL_DATA[levelNumber]) {
+                    consecutiveFailures = 0;
                     levelNumber++;
                 } else {
-                    break;
+                    consecutiveFailures++;
+                    levelNumber++;
                 }
             }
         }
         
-        this.maxLevels = levelNumber - 1;
+        this.maxLevels = Math.max(levelNumber - consecutiveFailures - 1, 4);
+        console.log(`Game detected max levels: ${this.maxLevels}`);
     }
     
     playMusic() {
