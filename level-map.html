@@ -327,7 +327,6 @@
         <div class="level-info" id="levelInfo">
             <h3 id="levelTitle">Level 1</h3>
             <p id="levelDescription">The beginning of your magical journey!</p>
-            <button onclick="playLevel()" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">Play Level</button>
         </div>
         
         <div class="level-preview" id="levelPreview">
@@ -672,33 +671,6 @@
                 levelTitle.textContent = titleText;
                 levelDescription.textContent = this.getLevelDescription(level, levelScore);
                 
-                // Update play button based on level status
-                const playButton = levelInfo.querySelector('button');
-                const isCompleted = this.completedLevels.includes(level);
-                const isLocked = level > this.currentLevel;
-                
-                if (isLocked) {
-                    playButton.textContent = 'Locked Level';
-                    playButton.style.background = '#999';
-                    playButton.style.cursor = 'not-allowed';
-                    playButton.onclick = null;
-                } else if (isCompleted) {
-                    playButton.textContent = 'Replay Level';
-                    playButton.style.background = '#4CAF50';
-                    playButton.style.cursor = 'pointer';
-                    playButton.onclick = () => this.playSelectedLevel();
-                } else if (level === this.currentLevel) {
-                    playButton.textContent = 'Continue Level';
-                    playButton.style.background = '#ff6b6b';
-                    playButton.style.cursor = 'pointer';
-                    playButton.onclick = () => this.playSelectedLevel();
-                } else {
-                    playButton.textContent = 'Play Level';
-                    playButton.style.background = '#4CAF50';
-                    playButton.style.cursor = 'pointer';
-                    playButton.onclick = () => this.playSelectedLevel();
-                }
-                
                 levelInfo.classList.add('show');
                 if (persistent) {
                     levelInfo.classList.add('persistent');
@@ -1016,12 +988,6 @@
             }
         }
         
-        function playLevel() {
-            const map = window.levelMap;
-            if (map && map.selectedLevel) {
-                map.playSelectedLevel();
-            }
-        }
         
         function goBack() {
             // Always go back to main menu (no level parameter) when using back button
