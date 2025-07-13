@@ -222,6 +222,44 @@
             border: 1px solid #333;
         }
         
+        .level-preview {
+            position: absolute;
+            top: 400px;
+            left: 20px;
+            width: 250px;
+            height: 180px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #4A90E2;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        
+        .level-preview.show {
+            opacity: 1;
+        }
+        
+        .level-preview canvas {
+            width: 100%;
+            height: 150px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #87CEEB;
+        }
+        
+        .level-preview-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+        
         @media (max-width: 768px) {
             .mobile-warning {
                 display: flex;
@@ -279,6 +317,11 @@
             <h3 id="levelTitle">Level 1</h3>
             <p id="levelDescription">The beginning of your magical journey!</p>
             <button onclick="playLevel()" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">Play Level</button>
+        </div>
+        
+        <div class="level-preview" id="levelPreview">
+            <div class="level-preview-title" id="previewTitle">Level 1</div>
+            <canvas id="previewCanvas" width="230" height="140"></canvas>
         </div>
     </div>
 
@@ -590,17 +633,19 @@
                     }
                 });
                 
-                // Hover behavior for preview only
-                diamond.addEventListener('mouseenter', () => {
+                // Hover behavior for preview
+                diamond.addEventListener('mouseenter', (e) => {
                     if (this.selectedLevel !== level) {
                         this.showLevelInfo(level, false);
                     }
+                    this.showLevelPreview(level, e.target);
                 });
                 
                 diamond.addEventListener('mouseleave', () => {
                     if (!this.levelInfoPersistent) {
                         this.hideLevelInfo();
                     }
+                    this.hideLevelPreview();
                 });
                 
                 this.mapCanvas.appendChild(diamond);
@@ -726,11 +771,238 @@
                 return description;
             }
             
+            async showLevelPreview(level, diamondElement) {
+                try {
+                    const levelData = await this.loadLevelData(level);
+                    if (!levelData) return;
+                    
+                    const preview = document.getElementById('levelPreview');
+                    const previewTitle = document.getElementById('previewTitle');
+                    const canvas = document.getElementById('previewCanvas');
+                    
+                    previewTitle.textContent = `Level ${level}`;
+                    
+                    // Render level preview
+                    this.renderLevelPreview(canvas, levelData);
+                    
+                    preview.classList.add('show');
+                } catch (error) {
+                    console.warn(`Failed to load preview for level ${level}:`, error);
+                }
+            }
+            
+            hideLevelPreview() {
+                const preview = document.getElementById('levelPreview');
+                preview.classList.remove('show');
+            }
+            
+            async loadLevelData(level) {
+                try {
+                    const response = await fetch(`levels/level${level}.json`, {
+                        cache: 'no-store',
+                        headers: { 'Cache-Control': 'no-cache' }
+                    });
+                    
+                    if (response.ok) {
+                        return await response.json();
+                    }
+                    
+                    // Fallback to embedded data
+                    if (typeof LEVEL_DATA !== 'undefined' && LEVEL_DATA[level]) {
+                        return LEVEL_DATA[level];
+                    }
+                    
+                    return null;
+                } catch (error) {
+                    // Try embedded data
+                    if (typeof LEVEL_DATA !== 'undefined' && LEVEL_DATA[level]) {
+                        return LEVEL_DATA[level];
+                    }
+                    throw error;
+                }
+            }
+            
+            renderLevelPreview(canvas, levelData) {
+                const ctx = canvas.getContext('2d');
+                const width = 230;
+                const height = 140;
+                
+                // Clear canvas
+                ctx.fillStyle = '#87CEEB';
+                ctx.fillRect(0, 0, width, height);
+                
+                // Game canvas is 1280x720, we need to match that aspect ratio
+                // Y coordinates in level data are percentages where 0% = top of screen, 100% = bottom
+                const gameWidth = 1280;
+                const gameHeight = 720;
+                const scaleX = width / 100;   // Scale percentage to preview width
+                const scaleY = height / 100;  // Scale percentage to preview height
+                
+                // Draw platforms
+                if (levelData.platforms) {
+                    levelData.platforms.forEach(platform => {
+                        const alpha = (platform.alpha || 255) / 255;
+                        ctx.fillStyle = `rgba(${platform.color[0]}, ${platform.color[1]}, ${platform.color[2]}, ${alpha})`;
+                        
+                        // Apply same coordinate transformation as the game: this.height - (this.height * (y / 100))
+                        const x = (platform.x / 100) * width;
+                        const y = height - ((platform.y / 100) * height);
+                        const w = (platform.width / 100) * width;
+                        const h = (platform.height / 100) * height;
+                        
+                        ctx.fillRect(x, y, w, h);
+                    });
+                }
+                
+                // Draw trees (trunk + foliage)
+                if (levelData.trees) {
+                    levelData.trees.forEach(tree => {
+                        const x = (tree.x / 100) * width;
+                        const y = height - ((tree.y / 100) * height);
+                        const w = (tree.width / 100) * width;
+                        const h = (tree.height / 100) * height;
+                        
+                        // Draw trunk (brown rectangle)
+                        const trunkWidth = w * 0.3;
+                        const trunkHeight = h * 0.7;
+                        const trunkX = x + (w - trunkWidth) / 2;
+                        const trunkY = y + h - trunkHeight; // From bottom of tree area
+                        
+                        ctx.fillStyle = '#8B4513';
+                        ctx.fillRect(trunkX, trunkY, trunkWidth, trunkHeight);
+                        
+                        // Draw foliage (green circle)
+                        const foliageRadius = w * 0.6 / 2;
+                        const foliageX = x + w / 2;
+                        const foliageY = y + h * 0.3; // From top portion of tree area
+                        
+                        ctx.fillStyle = '#228B22';
+                        ctx.beginPath();
+                        ctx.arc(foliageX, foliageY, foliageRadius, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                }
+                
+                // Draw clouds
+                if (levelData.clouds) {
+                    levelData.clouds.forEach(cloud => {
+                        const alpha = (cloud.alpha || 180) / 255;
+                        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                        
+                        const x = (cloud.x / 100) * width;
+                        const y = height - ((cloud.y / 100) * height);
+                        const w = (cloud.width / 100) * width;
+                        const h = (cloud.height / 100) * height;
+                        
+                        ctx.fillRect(x, y, w, h);
+                    });
+                }
+                
+                // Draw triangles (spikes)
+                if (levelData.triangles) {
+                    levelData.triangles.forEach(triangle => {
+                        ctx.fillStyle = `rgb(${triangle.color[0]}, ${triangle.color[1]}, ${triangle.color[2]})`;
+                        
+                        const x = (triangle.x / 100) * width;
+                        const y = height - ((triangle.y / 100) * height);
+                        const size = (triangle.size / 100) * Math.min(width, height);
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(x + size/2, y - size);
+                        ctx.lineTo(x + size, y);
+                        ctx.closePath();
+                        ctx.fill();
+                    });
+                }
+                
+                // Draw swamps
+                if (levelData.swamps) {
+                    levelData.swamps.forEach(swamp => {
+                        ctx.fillStyle = '#2F4F2F';
+                        
+                        const x = (swamp.x / 100) * width;
+                        const y = height - ((swamp.y / 100) * height);
+                        const w = (swamp.width / 100) * width;
+                        const h = (swamp.height / 100) * height;
+                        
+                        ctx.fillRect(x, y, w, h);
+                    });
+                }
+                
+                // Draw unicorns (starting positions)
+                if (levelData.unicorns) {
+                    Object.values(levelData.unicorns).forEach((unicorn, index) => {
+                        ctx.fillStyle = index === 0 ? '#FF69B4' : '#98FB98';
+                        ctx.beginPath();
+                        
+                        const x = (unicorn.x / 100) * width;
+                        const y = height - ((unicorn.y / 100) * height);
+                        
+                        ctx.arc(x, y, 3, 0, 2 * Math.PI);
+                        ctx.fill();
+                    });
+                }
+                
+                // Draw rainbow (goal) - horizontal bands like the game
+                if (levelData.rainbow) {
+                    const rainbow = levelData.rainbow;
+                    // Apply same coordinate transformation as the game: this.width - (this.width * (x / 100))
+                    const x = width - ((rainbow.x / 100) * width);
+                    const y = height - ((rainbow.y / 100) * height);
+                    const w = (rainbow.width / 100) * width;
+                    const h = (rainbow.height / 100) * height;
+                    
+                    // Rainbow colors as horizontal bands
+                    const colors = [
+                        [255, 0, 0],    // Red
+                        [255, 165, 0],  // Orange
+                        [255, 255, 0],  // Yellow
+                        [0, 255, 0],    // Green
+                        [0, 0, 255],    // Blue
+                        [75, 0, 130],   // Indigo
+                        [238, 130, 238] // Violet
+                    ];
+                    
+                    const bandHeight = h / colors.length;
+                    
+                    ctx.save();
+                    ctx.globalAlpha = 0.7;
+                    
+                    colors.forEach((color, index) => {
+                        ctx.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+                        ctx.fillRect(x, y + (index * bandHeight), w, bandHeight);
+                    });
+                    
+                    ctx.restore();
+                }
+                
+                // Draw collectible items
+                if (levelData.white_items) {
+                    ctx.fillStyle = '#FFFFFF';
+                    levelData.white_items.forEach(item => {
+                        const x = (item.x / 100) * width;
+                        const y = height - ((item.y / 100) * height);
+                        ctx.fillRect(x - 1, y - 1, 2, 2);
+                    });
+                }
+                
+                if (levelData.black_items) {
+                    ctx.fillStyle = '#000000';
+                    levelData.black_items.forEach(item => {
+                        const x = (item.x / 100) * width;
+                        const y = height - ((item.y / 100) * height);
+                        ctx.fillRect(x - 1, y - 1, 2, 2);
+                    });
+                }
+            }
+            
             setupEventListeners() {
                 // Keyboard navigation
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'Escape') {
                         this.hideLevelInfo();
+                        this.hideLevelPreview();
                     }
                 });
                 
