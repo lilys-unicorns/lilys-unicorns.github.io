@@ -1,3 +1,56 @@
+// Progress tracking system
+class ProgressManager {
+    static getProgress() {
+        try {
+            const progress = localStorage.getItem('lily_unicorns_progress');
+            return progress ? JSON.parse(progress) : { completedLevels: [], currentLevel: 1 };
+        } catch (error) {
+            console.warn('Failed to load progress:', error);
+            return { completedLevels: [], currentLevel: 1 };
+        }
+    }
+    
+    static saveProgress(progress) {
+        try {
+            localStorage.setItem('lily_unicorns_progress', JSON.stringify(progress));
+        } catch (error) {
+            console.warn('Failed to save progress:', error);
+        }
+    }
+    
+    static completeLevel(level) {
+        const progress = this.getProgress();
+        
+        // Add to completed levels if not already there
+        if (!progress.completedLevels.includes(level)) {
+            progress.completedLevels.push(level);
+            progress.completedLevels.sort((a, b) => a - b);
+        }
+        
+        // Update current level to the next one
+        progress.currentLevel = Math.max(progress.currentLevel, level + 1);
+        
+        this.saveProgress(progress);
+        return progress;
+    }
+    
+    static getCurrentLevel() {
+        return this.getProgress().currentLevel;
+    }
+    
+    static getCompletedLevels() {
+        return this.getProgress().completedLevels;
+    }
+    
+    static isLevelCompleted(level) {
+        return this.getCompletedLevels().includes(level);
+    }
+    
+    static resetProgress() {
+        this.saveProgress({ completedLevels: [], currentLevel: 1 });
+    }
+}
+
 // Lily Unicorns - JavaScript Version
 class Game {
     constructor() {
@@ -242,9 +295,25 @@ class Game {
         }
     }
     
+    parseURLParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const levelParam = urlParams.get('level');
+        
+        if (levelParam) {
+            const level = parseInt(levelParam);
+            if (level >= 1 && level <= this.maxLevels) {
+                return level;
+            }
+        }
+        
+        // If no URL parameter, check saved progress
+        const savedCurrentLevel = ProgressManager.getCurrentLevel();
+        return Math.min(savedCurrentLevel, this.maxLevels);
+    }
+    
     startGame() {
         this.gameState = 'PLAYING';
-        this.currentLevel = 1;
+        this.currentLevel = this.parseURLParams();
         this.playMusic();
         this.loadLevel();
     }
@@ -480,6 +549,9 @@ class Game {
             // Check swamp collisions
             this.checkSwampCollisions();
             
+            // Update swamps (for enhanced bubble and evaporation effects)
+            this.swamps.forEach(swamp => swamp.update());
+            
             // Check rainbow completion
             this.checkRainbowCompletion();
             
@@ -562,6 +634,9 @@ class Game {
             if (p1InRainbow && p2InRainbow) {
                 this.levelComplete = true;
                 this.createGlitterExplosion();
+                
+                // Save progress when level is completed
+                ProgressManager.completeLevel(this.currentLevel);
             }
         }
     }
@@ -1352,7 +1427,150 @@ class Triangle {
     }
 }
 
-// Swamp class
+// SwampBubble class for enhanced bubble effects
+class SwampBubble {
+    constructor(x, y, maxSize, swampWidth, swampHeight) {
+        this.x = x;
+        this.y = y;
+        this.maxSize = maxSize;
+        this.size = Math.random() * (maxSize * 0.5) + (maxSize * 0.3);
+        this.growthRate = 0.3 + Math.random() * 0.4;
+        this.alpha = 0.4 + Math.random() * 0.3;
+        this.offsetX = (Math.random() - 0.5) * 10;
+        this.offsetY = (Math.random() - 0.5) * 8;
+        this.timeOffset = Math.random() * Math.PI * 2;
+        this.swampWidth = swampWidth;
+        this.swampHeight = swampHeight;
+        this.life = 0;
+        this.maxLife = 100 + Math.random() * 100;
+        this.popAnimation = 0;
+        this.popped = false;
+    }
+    
+    update() {
+        this.life++;
+        
+        // Grow bubble over time
+        if (!this.popped && this.size < this.maxSize) {
+            this.size += this.growthRate;
+        }
+        
+        // Pop bubble when it reaches max size or max life
+        if ((this.size >= this.maxSize || this.life >= this.maxLife) && !this.popped) {
+            this.popped = true;
+            this.popAnimation = 10;
+        }
+        
+        // Handle pop animation
+        if (this.popped && this.popAnimation > 0) {
+            this.popAnimation--;
+            this.alpha *= 0.8;
+        }
+        
+        return this.popAnimation <= 0 && this.popped;
+    }
+    
+    render(ctx, time, swampX, swampY) {
+        if (this.popped && this.popAnimation <= 0) return;
+        
+        const animX = swampX + this.x + this.offsetX + Math.sin(time * 0.002 + this.timeOffset) * 3;
+        const animY = swampY + this.y + this.offsetY + Math.sin(time * 0.003 + this.timeOffset) * 2;
+        
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        
+        if (this.popped) {
+            // Pop animation - expanding ring
+            ctx.strokeStyle = 'rgba(101, 67, 33, 0.8)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(animX, animY, this.size + (10 - this.popAnimation) * 2, 0, Math.PI * 2);
+            ctx.stroke();
+        } else {
+            // Normal bubble
+            const gradient = ctx.createRadialGradient(
+                animX - this.size * 0.3, 
+                animY - this.size * 0.3, 
+                0,
+                animX, 
+                animY, 
+                this.size
+            );
+            gradient.addColorStop(0, 'rgba(139, 100, 69, 0.8)');
+            gradient.addColorStop(0.7, 'rgba(101, 67, 33, 0.6)');
+            gradient.addColorStop(1, 'rgba(85, 55, 25, 0.4)');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(animX, animY, this.size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Add bubble highlight
+            ctx.fillStyle = 'rgba(200, 180, 140, 0.3)';
+            ctx.beginPath();
+            ctx.arc(animX - this.size * 0.3, animY - this.size * 0.3, this.size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        ctx.restore();
+    }
+}
+
+// EvaporationParticle class for upward steam effects
+class EvaporationParticle {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.velocityX = (Math.random() - 0.5) * 0.5;
+        this.velocityY = -0.5 - Math.random() * 0.8;
+        this.size = 2 + Math.random() * 4;
+        this.alpha = 0.6 + Math.random() * 0.4;
+        this.life = 120 + Math.random() * 80;
+        this.maxLife = this.life;
+        this.sway = Math.random() * 0.02 + 0.01;
+        this.timeOffset = Math.random() * Math.PI * 2;
+    }
+    
+    update() {
+        this.life--;
+        
+        // Move upward with sway
+        this.x += this.velocityX + Math.sin(Date.now() * this.sway + this.timeOffset) * 0.3;
+        this.y += this.velocityY;
+        
+        // Fade and grow slightly as it rises
+        this.alpha = (this.life / this.maxLife) * 0.6;
+        this.size += 0.01;
+        
+        // Slow down over time
+        this.velocityY *= 0.998;
+        this.velocityX *= 0.998;
+        
+        return this.life <= 0;
+    }
+    
+    render(ctx) {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        
+        const gradient = ctx.createRadialGradient(
+            this.x, this.y, 0,
+            this.x, this.y, this.size
+        );
+        gradient.addColorStop(0, 'rgba(200, 200, 200, 0.8)');
+        gradient.addColorStop(0.5, 'rgba(180, 180, 180, 0.4)');
+        gradient.addColorStop(1, 'rgba(160, 160, 160, 0.1)');
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+}
+
+// Enhanced Swamp class with particle management
 class Swamp {
     constructor(x, y, width, height, color) {
         this.x = x;
@@ -1360,6 +1578,52 @@ class Swamp {
         this.width = width;
         this.height = height;
         this.color = color;
+        this.bubbles = [];
+        this.evaporationParticles = [];
+        this.bubbleSpawnTimer = 0;
+        this.evaporationSpawnTimer = 0;
+        this.maxBubbles = Math.floor(this.width / 30) + 3; // More bubbles for larger swamps
+        this.bubbleSpawnRate = 40 + Math.random() * 30;
+        this.evaporationSpawnRate = 15 + Math.random() * 10;
+    }
+    
+    update() {
+        // Spawn new bubbles
+        this.bubbleSpawnTimer++;
+        if (this.bubbleSpawnTimer >= this.bubbleSpawnRate && this.bubbles.length < this.maxBubbles) {
+            this.spawnBubble();
+            this.bubbleSpawnTimer = 0;
+            this.bubbleSpawnRate = 40 + Math.random() * 30;
+        }
+        
+        // Spawn evaporation particles
+        this.evaporationSpawnTimer++;
+        if (this.evaporationSpawnTimer >= this.evaporationSpawnRate) {
+            this.spawnEvaporationParticle();
+            this.evaporationSpawnTimer = 0;
+            this.evaporationSpawnRate = 15 + Math.random() * 10;
+        }
+        
+        // Update bubbles
+        this.bubbles = this.bubbles.filter(bubble => !bubble.update());
+        
+        // Update evaporation particles
+        this.evaporationParticles = this.evaporationParticles.filter(particle => !particle.update());
+    }
+    
+    spawnBubble() {
+        const bubbleX = Math.random() * (this.width - 40) + 20;
+        const bubbleY = this.height * 0.3 + Math.random() * (this.height * 0.4);
+        const maxSize = 15 + Math.random() * 25; // Bigger bubbles (15-40px)
+        
+        this.bubbles.push(new SwampBubble(bubbleX, bubbleY, maxSize, this.width, this.height));
+    }
+    
+    spawnEvaporationParticle() {
+        const particleX = this.x + Math.random() * this.width;
+        const particleY = this.y + Math.random() * (this.height * 0.3);
+        
+        this.evaporationParticles.push(new EvaporationParticle(particleX, particleY));
     }
     
     checkCollision(player) {
@@ -1382,8 +1646,13 @@ class Swamp {
     }
     
     render(ctx) {
-        // Draw swamp with muddy brown color and bubbling effect
-        ctx.fillStyle = `rgb(${this.color[0]}, ${this.color[1]}, ${this.color[2]})`;
+        // Draw swamp with muddy brown color and enhanced texture
+        const gradient = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.height);
+        gradient.addColorStop(0, `rgba(${this.color[0]}, ${this.color[1]}, ${this.color[2]}, 0.9)`);
+        gradient.addColorStop(0.6, `rgb(${this.color[0]}, ${this.color[1]}, ${this.color[2]})`);
+        gradient.addColorStop(1, `rgba(${Math.max(0, this.color[0]-20)}, ${Math.max(0, this.color[1]-20)}, ${Math.max(0, this.color[2]-20)}, 1)`);
+        
+        ctx.fillStyle = gradient;
         ctx.fillRect(this.x, this.y, this.width, this.height);
         
         // Add darker border
@@ -1391,19 +1660,22 @@ class Swamp {
         ctx.lineWidth = 2;
         ctx.strokeRect(this.x, this.y, this.width, this.height);
         
-        // Add some bubbles for swamp effect
-        const time = Date.now() * 0.003;
-        ctx.fillStyle = 'rgba(101, 67, 33, 0.6)';
-        
+        // Add some surface texture
+        ctx.fillStyle = 'rgba(85, 55, 25, 0.3)';
         for (let i = 0; i < 3; i++) {
-            const bubbleX = this.x + (this.width * 0.2) + (i * this.width * 0.3);
-            const bubbleY = this.y + (this.height * 0.3) + Math.sin(time + i * 2) * 5;
-            const bubbleSize = 3 + Math.sin(time * 2 + i) * 2;
-            
-            ctx.beginPath();
-            ctx.arc(bubbleX, bubbleY, bubbleSize, 0, Math.PI * 2);
-            ctx.fill();
+            const waveX = this.x + (i * this.width / 3);
+            const waveY = this.y + Math.sin(Date.now() * 0.001 + i) * 2;
+            const waveWidth = this.width / 3;
+            const waveHeight = 4;
+            ctx.fillRect(waveX, waveY, waveWidth, waveHeight);
         }
+        
+        // Render evaporation particles first (behind bubbles)
+        this.evaporationParticles.forEach(particle => particle.render(ctx));
+        
+        // Render bubbles
+        const time = Date.now();
+        this.bubbles.forEach(bubble => bubble.render(ctx, time, this.x, this.y));
     }
 }
 
