@@ -89,6 +89,8 @@ class Game {
         this.gameOver = false;
         this.gameOverMessage = '';
         this.glitterParticles = [];
+        this.isPerfectScore = false;
+        this.perfectGlitterTimer = 0;
         
         // Sprites
         this.unicornSprite = null;
@@ -388,6 +390,8 @@ class Game {
         this.player1Score = 0;
         this.player2Score = 0;
         this.glitterParticles = [];
+        this.isPerfectScore = false;
+        this.perfectGlitterTimer = 0;
         
         // Reset player positions
         if (this.levelData.unicorns) {
@@ -670,12 +674,17 @@ class Game {
             
             if (p1InRainbow && p2InRainbow) {
                 this.levelComplete = true;
-                this.createGlitterExplosion();
                 
                 // Check if all items were collected (perfect score)
                 const collectedAllWhite = this.player1Score === this.totalWhiteItems;
                 const collectedAllBlack = this.player2Score === this.totalBlackItems;
                 const perfectScore = collectedAllWhite && collectedAllBlack;
+                
+                // Set perfect score flag for continuous glitter
+                this.isPerfectScore = perfectScore;
+                
+                // Create enhanced glitter explosion based on score
+                this.createGlitterExplosion(perfectScore);
                 
                 // Save progress when level is completed
                 ProgressManager.completeLevel(this.currentLevel, perfectScore);
@@ -683,10 +692,68 @@ class Game {
         }
     }
     
-    createGlitterExplosion() {
+    createGlitterExplosion(isPerfectScore = false) {
         const centerX = this.width / 2;
         const centerY = this.height / 2;
         
+        if (isPerfectScore) {
+            // SPECTACULAR PERFECT SCORE EXPLOSION! 🌟
+            this.createPerfectScoreGlitter(centerX, centerY);
+        } else {
+            // Regular completion glitter
+            this.createRegularGlitter(centerX, centerY);
+        }
+    }
+    
+    createPerfectScoreGlitter(centerX, centerY) {
+        // Create multiple waves of enhanced particles
+        for (let wave = 0; wave < 3; wave++) {
+            setTimeout(() => {
+                // Main explosion - larger and more particles
+                for (let i = 0; i < 200; i++) {
+                    this.glitterParticles.push(new GlitterParticle(
+                        centerX + (Math.random() - 0.5) * 300,
+                        centerY + (Math.random() - 0.5) * 300,
+                        (Math.random() - 0.5) * 15, // Faster velocities
+                        (Math.random() - 0.5) * 15,
+                        this.getPerfectScoreColor(),
+                        true // Enhanced particle flag
+                    ));
+                }
+                
+                // Add spectacular radial bursts
+                for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
+                    for (let radius = 0; radius < 5; radius++) {
+                        this.glitterParticles.push(new GlitterParticle(
+                            centerX + Math.cos(angle) * radius * 30,
+                            centerY + Math.sin(angle) * radius * 30,
+                            Math.cos(angle) * (8 + radius * 2),
+                            Math.sin(angle) * (8 + radius * 2),
+                            this.getPerfectScoreColor(),
+                            true
+                        ));
+                    }
+                }
+                
+                // Add spiraling particles
+                for (let i = 0; i < 50; i++) {
+                    const angle = (i / 50) * Math.PI * 4;
+                    const radius = i * 3;
+                    this.glitterParticles.push(new GlitterParticle(
+                        centerX + Math.cos(angle) * radius,
+                        centerY + Math.sin(angle) * radius,
+                        Math.cos(angle + Math.PI/2) * 6,
+                        Math.sin(angle + Math.PI/2) * 6,
+                        this.getPerfectScoreColor(),
+                        true
+                    ));
+                }
+            }, wave * 200); // Staggered waves
+        }
+    }
+    
+    createRegularGlitter(centerX, centerY) {
+        // Regular completion effect (original)
         for (let i = 0; i < 100; i++) {
             this.glitterParticles.push(new GlitterParticle(
                 centerX + (Math.random() - 0.5) * 200,
@@ -696,6 +763,31 @@ class Game {
                 this.getRandomColor()
             ));
         }
+    }
+    
+    getPerfectScoreColor() {
+        // Enhanced rainbow colors with metallic and bright tones
+        const perfectColors = [
+            [255, 0, 127],    // Hot Pink
+            [255, 20, 147],   // Deep Pink
+            [255, 69, 0],     // Red Orange
+            [255, 140, 0],    // Dark Orange
+            [255, 215, 0],    // Gold
+            [255, 255, 0],    // Yellow
+            [154, 205, 50],   // Yellow Green
+            [0, 255, 127],    // Spring Green
+            [0, 191, 255],    // Deep Sky Blue
+            [65, 105, 225],   // Royal Blue
+            [138, 43, 226],   // Blue Violet
+            [186, 85, 211],   // Medium Orchid
+            [255, 20, 147],   // Deep Pink
+            [255, 105, 180],  // Hot Pink
+            [255, 182, 193],  // Light Pink
+            [255, 255, 255],  // White (sparkle)
+            [255, 215, 0],    // Gold (extra gold for luxury)
+            [255, 223, 0],    // Golden Yellow
+        ];
+        return perfectColors[Math.floor(Math.random() * perfectColors.length)];
     }
     
     getRandomColor() {
@@ -712,10 +804,55 @@ class Game {
     }
     
     updateGlitter() {
+        // Update existing particles
         for (let i = this.glitterParticles.length - 1; i >= 0; i--) {
             this.glitterParticles[i].update();
-            if (this.glitterParticles[i].alpha <= 0) {
+            // Only remove particles with life <= 0 (not perfect particles)
+            if (this.glitterParticles[i].life <= 0 && this.glitterParticles[i].life !== -1) {
                 this.glitterParticles.splice(i, 1);
+            }
+        }
+        
+        // Continuously generate perfect glitter if perfect score achieved
+        if (this.isPerfectScore && this.levelComplete) {
+            this.perfectGlitterTimer++;
+            
+            // Add new perfect particles every few frames
+            if (this.perfectGlitterTimer % 15 === 0) {
+                const centerX = this.width / 2;
+                const centerY = this.height / 2;
+                
+                // Add spiraling perfect particles
+                for (let i = 0; i < 5; i++) {
+                    const angle = (this.perfectGlitterTimer * 0.05 + i * 1.26) % (Math.PI * 2);
+                    const radius = 50 + Math.sin(this.perfectGlitterTimer * 0.02) * 30;
+                    
+                    this.glitterParticles.push(new GlitterParticle(
+                        centerX + Math.cos(angle) * radius,
+                        centerY + Math.sin(angle) * radius,
+                        Math.cos(angle + Math.PI/2) * 3,
+                        Math.sin(angle + Math.PI/2) * 3 - 2,
+                        this.getPerfectScoreColor(),
+                        true
+                    ));
+                }
+            }
+            
+            // Add random bursts of perfect particles
+            if (this.perfectGlitterTimer % 45 === 0) {
+                const centerX = this.width / 2;
+                const centerY = this.height / 2;
+                
+                for (let i = 0; i < 10; i++) {
+                    this.glitterParticles.push(new GlitterParticle(
+                        centerX + (Math.random() - 0.5) * 200,
+                        centerY + (Math.random() - 0.5) * 200,
+                        (Math.random() - 0.5) * 12,
+                        (Math.random() - 0.5) * 12,
+                        this.getPerfectScoreColor(),
+                        true
+                    ));
+                }
             }
         }
     }
@@ -1353,18 +1490,31 @@ class Rainbow {
     }
 }
 
-// GlitterParticle class
+// Enhanced GlitterParticle class with perfect score support
 class GlitterParticle {
-    constructor(x, y, velocityX, velocityY, color) {
+    constructor(x, y, velocityX, velocityY, color, isPerfect = false) {
         this.x = x;
         this.y = y;
         this.velocityX = velocityX;
         this.velocityY = velocityY;
         this.color = color;
         this.alpha = 255;
-        this.size = Math.random() * 6 + 2;
-        this.gravity = 0.1;
-        this.life = 60;
+        this.isPerfect = isPerfect;
+        
+        if (isPerfect) {
+            // Enhanced properties for perfect score particles
+            this.size = Math.random() * 10 + 6; // Bigger particles
+            this.gravity = 0.05; // Slower fall
+            this.life = -1; // Infinite life for perfect particles!
+            this.rotation = 0;
+            this.rotationSpeed = (Math.random() - 0.5) * 0.2;
+            this.pulsePhase = Math.random() * Math.PI * 2;
+        } else {
+            // Regular particles
+            this.size = Math.random() * 6 + 2;
+            this.gravity = 0.1;
+            this.life = 60;
+        }
     }
     
     update() {
@@ -1372,21 +1522,71 @@ class GlitterParticle {
         this.y += this.velocityY;
         this.velocityY += this.gravity;
         
-        this.life--;
-        this.alpha = (this.life / 60) * 255;
+        if (this.isPerfect) {
+            // Perfect particles never die - they keep sparkling!
+            this.rotation += this.rotationSpeed;
+            
+            // Continuous pulsing alpha effect
+            const pulseEffect = Math.sin(Date.now() * 0.008 + this.pulsePhase) * 0.3 + 0.7;
+            this.alpha = 255 * pulseEffect;
+            
+            // Add air resistance for more graceful movement
+            this.velocityX *= 0.998;
+            this.velocityY *= 0.998;
+        } else {
+            // Regular particles have limited life
+            this.life--;
+            this.alpha = (this.life / 60) * 255;
+        }
         
         // Bounce off ground
         if (this.y > (720 - 10) - this.size) {
             this.y = (720 - 10) - this.size;
-            this.velocityY *= -0.5;
+            if (this.isPerfect) {
+                this.velocityY *= -0.6; // Higher bounce for perfect particles
+                this.velocityX *= 0.85;
+            } else {
+                this.velocityY *= -0.5;
+            }
         }
     }
     
     render(ctx) {
         ctx.save();
         ctx.globalAlpha = this.alpha / 255;
-        ctx.fillStyle = `rgb(${this.color[0]}, ${this.color[1]}, ${this.color[2]})`;
-        ctx.fillRect(this.x, this.y, this.size, this.size);
+        
+        if (this.isPerfect) {
+            // Enhanced rendering for perfect score particles
+            ctx.translate(this.x + this.size/2, this.y + this.size/2);
+            ctx.rotate(this.rotation);
+            
+            // Create gradient for metallic effect
+            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size);
+            gradient.addColorStop(0, `rgba(255, 255, 255, 0.9)`);
+            gradient.addColorStop(0.4, `rgb(${this.color[0]}, ${this.color[1]}, ${this.color[2]})`);
+            gradient.addColorStop(1, `rgba(${this.color[0] * 0.6}, ${this.color[1] * 0.6}, ${this.color[2] * 0.6}, 0.8)`);
+            
+            ctx.fillStyle = gradient;
+            
+            // Draw diamond/star shape
+            ctx.beginPath();
+            ctx.moveTo(0, -this.size);
+            ctx.lineTo(this.size * 0.7, 0);
+            ctx.lineTo(0, this.size);
+            ctx.lineTo(-this.size * 0.7, 0);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Add sparkle cross
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.fillRect(-1, -this.size * 0.8, 2, this.size * 1.6);
+            ctx.fillRect(-this.size * 0.8, -1, this.size * 1.6, 2);
+        } else {
+            // Regular square particle
+            ctx.fillStyle = `rgb(${this.color[0]}, ${this.color[1]}, ${this.color[2]})`;
+            ctx.fillRect(this.x, this.y, this.size, this.size);
+        }
+        
         ctx.restore();
     }
 }
