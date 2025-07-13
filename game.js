@@ -310,42 +310,14 @@ class Game {
             embeddedLevels.forEach(level => foundLevels.add(level));
         }
         
-        // Scan systematically with minimal requests
-        // Check levels 1-50 in batches to find existing ones efficiently
-        let consecutiveNotFound = 0;
-        const maxConsecutiveNotFound = 3;
+        // List of existing level files (update this when adding new levels)
+        // Based on actual directory listing: level1-21 exist (no level22+ files)
+        const existingLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
         
-        for (let level = 1; level <= 50; level++) {
-            try {
-                const response = await fetch(`levels/level${level}.json`, {
-                    method: 'HEAD',
-                    cache: 'no-store',
-                    headers: { 'Cache-Control': 'no-cache' }
-                });
-                
-                if (response.ok) {
-                    foundLevels.add(level);
-                    consecutiveNotFound = 0;
-                } else {
-                    consecutiveNotFound++;
-                    // If we haven't found anything in a while and we have some levels, stop
-                    if (consecutiveNotFound >= maxConsecutiveNotFound && foundLevels.size > 0) {
-                        break;
-                    }
-                }
-            } catch (error) {
-                consecutiveNotFound++;
-                // If we haven't found anything in a while and we have some levels, stop
-                if (consecutiveNotFound >= maxConsecutiveNotFound && foundLevels.size > 0) {
-                    break;
-                }
-            }
-            
-            // Add a small delay to be gentle on the server
-            await new Promise(resolve => setTimeout(resolve, 10));
-        }
+        // Add all existing levels to found levels without making any HTTP requests
+        existingLevels.forEach(level => foundLevels.add(level));
         
-        return Array.from(foundLevels);
+        return Array.from(foundLevels).sort((a, b) => a - b);
     }
     
     playMusic() {
