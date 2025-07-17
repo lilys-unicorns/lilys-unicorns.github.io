@@ -135,12 +135,13 @@ class Game {
         this.loadMusic();
         await this.detectMaxLevels();
         
-        // Check if a level parameter is provided in URL
+        // Check if a level parameter is provided in URL or if in test mode
         const urlParams = new URLSearchParams(window.location.search);
         const levelParam = urlParams.get('level');
+        const isTestMode = urlParams.get('test') === 'true';
         
-        if (levelParam) {
-            // Direct level access - bypass menu and start game
+        if (levelParam || isTestMode) {
+            // Direct level access or test mode - bypass menu and start game
             this.startGame();
         }
         
@@ -196,6 +197,37 @@ class Game {
             
             this.keys[keyToUse] = false;
         });
+        
+        // Add click handler for test mode back to editor button
+        this.canvas.addEventListener('click', (e) => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('test') === 'true') {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Check if click is on "Back to Editor" button (200, 10, 200, 30)
+                if (x >= 200 && x <= 400 && y >= 10 && y <= 40) {
+                    this.returnToEditor();
+                }
+            }
+        });
+    }
+    
+    returnToEditor() {
+        // Store the current level data back to sessionStorage
+        if (this.levelData) {
+            const levelData = JSON.stringify(this.levelData);
+            sessionStorage.setItem('testLevelData', levelData);
+        }
+        
+        // Close this window and return to the editor
+        window.close();
+        
+        // If window.close() doesn't work (popup blockers), redirect to editor
+        setTimeout(() => {
+            window.location.href = 'level-editor.html';
+        }, 100);
     }
     
     handleKeyPress(key) {
@@ -278,6 +310,11 @@ class Game {
             true, // inverted colors
             'player2'
         );
+        
+        // If level data exists, update player positions
+        if (this.levelData) {
+            this.setupLevel();
+        }
     }
     
     async detectMaxLevels() {
@@ -377,6 +414,25 @@ class Game {
     }
     
     async loadLevel() {
+        // Check if we're in test mode (loading from level editor)
+        const urlParams = new URLSearchParams(window.location.search);
+        const isTestMode = urlParams.get('test') === 'true';
+        
+        if (isTestMode) {
+            // Load test level data from sessionStorage
+            const testLevelData = sessionStorage.getItem('testLevelData');
+            if (testLevelData) {
+                try {
+                    this.levelData = JSON.parse(testLevelData);
+                    this.currentLevel = 1;
+                    this.setupLevel();
+                    return;
+                } catch (error) {
+                    console.error('Failed to load test level data:', error);
+                }
+            }
+        }
+        
         try {
             // Try to load from JSON file first (for server environments)
             const response = await fetch(`levels/level${this.currentLevel}.json?t=${Date.now()}`, {
@@ -416,8 +472,8 @@ class Game {
         this.isPerfectScore = false;
         this.perfectGlitterTimer = 0;
         
-        // Reset player positions
-        if (this.levelData.unicorns) {
+        // Reset player positions (only if players exist)
+        if (this.levelData.unicorns && this.player1 && this.player2) {
             this.player1.x = this.width * (this.levelData.unicorns.unicorn1.x / 100);
             this.player1.y = this.levelData.unicorns.unicorn1.y ? 
                 this.height - (this.height * (this.levelData.unicorns.unicorn1.y / 100)) : 
@@ -429,11 +485,13 @@ class Game {
                 this.height / 2;
         }
         
-        // Reset physics
-        this.player1.velocityY = 0;
-        this.player1.onGround = false;
-        this.player2.velocityY = 0;
-        this.player2.onGround = false;
+        // Reset physics (only if players exist)
+        if (this.player1 && this.player2) {
+            this.player1.velocityY = 0;
+            this.player1.onGround = false;
+            this.player2.velocityY = 0;
+            this.player2.onGround = false;
+        }
         
         // Create platforms
         this.platforms = [];
@@ -1052,6 +1110,24 @@ class Game {
         const levelName = this.levelData?.level?.name || `Level ${this.currentLevel}`;
         this.drawMultilineText(levelName, this.width / 2, 30, 24, this.width - 300);
         
+        // Show test mode indicator with back to editor button
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('test') === 'true') {
+            // Test mode badge
+            this.ctx.fillStyle = 'rgba(255, 165, 0, 0.9)';
+            this.ctx.fillRect(10, 10, 180, 30);
+            this.ctx.fillStyle = '#000';
+            this.ctx.font = 'bold 16px monospace';
+            this.ctx.textAlign = 'left';
+            this.ctx.fillText('🎮 TEST MODE', 15, 30);
+            
+            // Back to editor button
+            this.ctx.fillStyle = 'rgba(70, 130, 180, 0.9)';
+            this.ctx.fillRect(200, 10, 200, 30);
+            this.ctx.fillStyle = '#fff';
+            this.ctx.font = 'bold 14px monospace';
+            this.ctx.fillText('← Back to Editor', 205, 30);
+        }
         
         // Level complete message
         if (this.levelComplete) {

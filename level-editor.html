@@ -133,19 +133,20 @@
         }
         
         .file-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
         }
         
         .file-actions button {
-            flex: 1;
-            padding: 10px;
+            padding: 12px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-family: monospace;
             font-weight: bold;
+            font-size: 14px;
         }
         
         .save-btn {
@@ -159,8 +160,23 @@
         }
         
         .clear-btn {
-            background: #f44336;
+            background: #ff5722;
             color: white;
+            border: 2px solid #d84315;
+        }
+        
+        .clear-btn:hover {
+            background: #d84315;
+            border-color: #bf360c;
+        }
+        
+        .test-btn {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .test-btn:hover {
+            background: #45a049;
         }
         
         .json-output {
@@ -362,6 +378,7 @@
                 <div class="file-actions">
                     <button class="save-btn" id="saveBtn">Save JSON</button>
                     <button class="load-btn" id="loadBtn">Load</button>
+                    <button class="test-btn" id="testBtn">🎮 Test Level</button>
                     <button class="clear-btn" id="clearBtn">Clear All</button>
                 </div>
                 
@@ -515,6 +532,7 @@
                 // File operations
                 document.getElementById('saveBtn').addEventListener('click', () => this.saveLevel());
                 document.getElementById('loadBtn').addEventListener('click', () => this.loadLevel());
+                document.getElementById('testBtn').addEventListener('click', () => this.testLevel());
                 document.getElementById('clearBtn').addEventListener('click', () => this.clearLevel());
                 document.getElementById('fileInput').addEventListener('change', (e) => this.handleFileLoad(e));
             }
@@ -1416,6 +1434,18 @@
                 a.download = filename;
                 a.click();
                 URL.revokeObjectURL(url);
+            }
+            
+            testLevel() {
+                // Make sure level data structure is complete
+                this.ensureLevelDataStructure();
+                
+                // Store the current level data in sessionStorage for the game to use
+                const levelData = JSON.stringify(this.levelData);
+                sessionStorage.setItem('testLevelData', levelData);
+                
+                // Open the game with a special test parameter
+                window.open('index.html?test=true', '_blank');
             }
             
             loadLevel() {
